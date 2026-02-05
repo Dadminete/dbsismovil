@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --gold: #d4af37;
+  --gold-muted: #9e812b;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(212, 175, 55, 0.2);
+}
+
+@theme {
+  --color-gold: var(--gold);
+  --color-gold-muted: var(--gold-muted);
+  --color-background-glass: var(--card-bg);
+  --color-border-glass: var(--card-border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glass {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--card-border);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #d4af37 0%, #9e812b 100%);
+}
+
+.gold-text-gradient {
+  background: linear-gradient(135deg, #f9d976 0%, #d4af37 50%, #9e812b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

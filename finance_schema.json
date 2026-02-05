@@ -1,0 +1,612 @@
+{
+  "categorias_cuentas": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "codigo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "nombre",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "tipo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "subtipo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "padre_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "nivel",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "es_detalle",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "activa",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "categorias": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "nombre",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "descripcion",
+      "data_type": "text"
+    },
+    {
+      "column_name": "icono",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "color",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "activo",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "orden",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "cierres_caja": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "caja_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "monto_final",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "ingresos_del_dia",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "gastos_del_dia",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "fecha_cierre",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "usuario_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "observaciones",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "categorias_papeleria": [
+    {
+      "column_name": "id",
+      "data_type": "bigint"
+    },
+    {
+      "column_name": "nombre",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "descripcion",
+      "data_type": "text"
+    },
+    {
+      "column_name": "icono",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "color",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "activo",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "orden",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "cajas": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "nombre",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "descripcion",
+      "data_type": "text"
+    },
+    {
+      "column_name": "tipo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "cuenta_contable_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "responsable_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "saldo_inicial",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "saldo_actual",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "limite_maximo",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "activa",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "cuentas_contables": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "codigo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "nombre",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "categoria_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "tipo_cuenta",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "moneda",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "saldo_inicial",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "saldo_actual",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "activa",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "pagos_cuentas_por_pagar": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "cuenta_por_pagar_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "monto",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "fecha_pago",
+      "data_type": "date"
+    },
+    {
+      "column_name": "metodo_pago",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "numero_referencia",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "observaciones",
+      "data_type": "text"
+    },
+    {
+      "column_name": "creado_por",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "movimientos_contables": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "tipo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "monto",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "categoria_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "metodo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "caja_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "bank_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "cuenta_bancaria_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "descripcion",
+      "data_type": "text"
+    },
+    {
+      "column_name": "fecha",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "usuario_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "cuenta_por_pagar_id",
+      "data_type": "uuid"
+    }
+  ],
+  "cuentas_bancarias": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "bank_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "numero_cuenta",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "tipo_cuenta",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "moneda",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "nombre_oficial_cuenta",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "cuenta_contable_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "activo",
+      "data_type": "boolean"
+    },
+    {
+      "column_name": "observaciones",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "cuentas_por_cobrar": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "factura_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "cliente_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "numero_documento",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "fecha_emision",
+      "data_type": "date"
+    },
+    {
+      "column_name": "fecha_vencimiento",
+      "data_type": "date"
+    },
+    {
+      "column_name": "monto_original",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "monto_pendiente",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "moneda",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "estado",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "dias_vencido",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "observaciones",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "movimientos_inventario": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "producto_id",
+      "data_type": "bigint"
+    },
+    {
+      "column_name": "usuario_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "tipo_movimiento",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "cantidad",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "cantidad_anterior",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "cantidad_nueva",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "motivo",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "referencia",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "notas",
+      "data_type": "text"
+    },
+    {
+      "column_name": "fecha_movimiento",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    }
+  ],
+  "cuentas_por_pagar": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "proveedor_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "numero_documento",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "tipo_documento",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "fecha_emision",
+      "data_type": "date"
+    },
+    {
+      "column_name": "fecha_vencimiento",
+      "data_type": "date"
+    },
+    {
+      "column_name": "concepto",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "monto_original",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "monto_pendiente",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "cuota_mensual",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "moneda",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "estado",
+      "data_type": "character varying"
+    },
+    {
+      "column_name": "dias_vencido",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "observaciones",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "numero_cuotas",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "tipo",
+      "data_type": "character varying"
+    }
+  ],
+  "aperturas_caja": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "caja_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "monto_inicial",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "fecha_apertura",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "usuario_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "observaciones",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    }
+  ]
+}
