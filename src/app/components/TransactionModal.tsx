@@ -14,7 +14,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         tipo: 'ingreso',
-        metodo: 'efectivo',
+        metodo: 'caja',
         monto: '',
         categoria_id: '',
         caja_id: '',
@@ -52,10 +52,20 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
         e.preventDefault();
         setLoading(true);
         try {
+            // Combine selected date with current time
+            const now = new Date();
+            const timeString = now.toTimeString().split(' ')[0]; // HH:MM:SS
+            const dateTime = `${formData.fecha}T${timeString}`;
+
+            const payload = {
+                ...formData,
+                fecha: new Date(dateTime).toISOString()
+            };
+
             const res = await fetch('/api/finance/transactions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
             if (res.ok) {
                 onSuccess?.();
@@ -72,9 +82,14 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
 
     const filteredCategories = formData.metodo === 'papeleria'
         ? formOptions.papeleriaCategories
-        : formOptions.categories.filter((c: any) =>
-            formData.tipo === 'ingreso' ? (c.tipo === 'Ingreso' || c.tipo === 'Activo') : (c.tipo === 'Gasto' || c.tipo === 'Pasivo')
-        );
+        : formOptions.categories.filter((c: any) => {
+            const categoryType = (c.tipo || '').toLowerCase().trim();
+            if (formData.tipo === 'ingreso') {
+                return categoryType === 'ingreso' || categoryType === 'activo';
+            } else {
+                return categoryType === 'gasto' || categoryType === 'pasivo';
+            }
+        });
 
     const accountsForSelectedBank = formOptions.accounts.filter((a: any) => a.bank_id === formData.bank_id);
     const isExpense = formData.tipo === 'gasto';
@@ -134,7 +149,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
                             {/* Metodo Grid */}
                             <div className="grid grid-cols-3 gap-3">
                                 {[
-                                    { id: 'efectivo', icon: Wallet, label: 'Caja' },
+                                    { id: 'caja', icon: Wallet, label: 'Caja' },
                                     { id: 'transferencia', icon: CreditCard, label: 'Banco' },
                                     { id: 'papeleria', icon: Book, label: 'Papelería' }
                                 ].map(m => (
@@ -187,7 +202,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
                             </div>
 
                             {/* Dynamic Source Selectors */}
-                            {formData.metodo === 'efectivo' && (
+                            {formData.metodo === 'caja' && (
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[9px] text-gray-400 font-black uppercase tracking-widest ml-1">Seleccionar Caja</label>
                                     <select

@@ -13,6 +13,9 @@ export default function Dashboard() {
     async function fetchStats() {
       try {
         const res = await fetch('/api/stats');
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
         setStats(data);
       } catch (error) {
@@ -30,8 +33,20 @@ export default function Dashboard() {
     </div>
   );
 
-  const income = stats.monthlyIncome;
-  const expenses = stats.monthlyExpenses;
+  if (!stats) return (
+    <div className="p-10 text-center">
+      <p className="text-red-500 font-bold mb-2">Error cargando datos</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 bg-gold/10 text-gold rounded-xl text-xs font-black uppercase"
+      >
+        Reintentar
+      </button>
+    </div>
+  );
+
+  const income = stats.monthlyIncome || 0;
+  const expenses = stats.monthlyExpenses || 0;
   const total = income + expenses;
   const incomeWidth = total > 0 ? (income / total) * 100 : 50;
   const expensesWidth = total > 0 ? (expenses / total) * 100 : 50;

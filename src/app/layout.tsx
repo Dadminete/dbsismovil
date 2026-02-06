@@ -55,7 +55,7 @@ export default async function RootLayout({
             // Wait, the USER REQUESTED: "when I logout in one place, all sessions should close".
             // So if I am here and version mismatch -> I should be treated as logged out.
             // I will start by just redirecting to /login, effectively logging them out visually.
-            redirect('/api/auth/logout');
+            redirect('/login');
           }
         }
       }

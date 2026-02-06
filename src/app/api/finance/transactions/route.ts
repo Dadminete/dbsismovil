@@ -17,31 +17,41 @@ export async function POST(request: Request) {
             usuario_id
         } = body;
 
+        console.log('Received transaction body:', body);
+        const finalUserId = usuario_id || 'df4b1335-5ff6-4703-8dcd-3e2f74fb0822';
+        console.log('Using User ID:', finalUserId);
+
+        const queryParams = [
+            tipo,
+            monto,
+            categoria_id,
+            metodo,
+            caja_id || null,
+            bank_id || null,
+            cuenta_bancaria_id || null,
+            descripcion,
+            fecha || new Date(),
+            finalUserId,
+            new Date(), // created_at
+            new Date()  // updated_at
+        ];
+        console.log('Query params:', queryParams);
+
         // 1. Insert into movimientos_contables
         const result = await query(
             `INSERT INTO movimientos_contables (
-                tipo, monto, categoria_id, metodo, caja_id, bank_id, cuenta_bancaria_id, descripcion, fecha, usuario_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-            [
-                tipo,
-                monto,
-                categoria_id,
-                metodo,
-                caja_id || null,
-                bank_id || null,
-                cuenta_bancaria_id || null,
-                descripcion,
-                fecha || new Date(),
-                usuario_id || null // In a real app, this would be the logged-in user
-            ]
+                tipo, monto, categoria_id, metodo, caja_id, bank_id, cuenta_bancaria_id, descripcion, fecha, usuario_id, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+            queryParams
         );
 
         // 2. Update balances (simplistic for now, in a real app use triggers or more complex logic)
-        if (metodo === 'efectivo' && caja_id) {
+        if (metodo === 'caja' && caja_id) {
             const multiplier = tipo === 'ingreso' ? 1 : -1;
+            const amount = parseFloat(monto);
             await query(
-                'UPDATE cajas SET saldo_actual = saldo_actual + ($1 * $2), updated_at = NOW() WHERE id = $3',
-                [monto, multiplier, caja_id]
+                'UPDATE cajas SET saldo_actual = saldo_actual + ($1::numeric * $2::int), updated_at = NOW() WHERE id = $3',
+                [amount, multiplier, caja_id]
             );
         } else if (metodo === 'transferencia' && cuenta_bancaria_id) {
             const multiplier = tipo === 'ingreso' ? 1 : -1;
