@@ -79,13 +79,48 @@ export default function SettingsPage() {
         if (!biometricEnabled) {
             // Check if biometric is available
             if (window.PublicKeyCredential) {
-                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-                if (available) {
-                    setBiometricEnabled(true);
-                    localStorage.setItem('biometricEnabled', 'true');
-                    toast('Acceso biométrico activado');
-                } else {
-                    toast('Biométrico no disponible');
+                try {
+                    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                    if (!available) {
+                        toast('Biométrico no disponible en este dispositivo');
+                        return;
+                    }
+
+                    // Create challenge (in production this should come from server)
+                    const challenge = new Uint8Array(32);
+                    window.crypto.getRandomValues(challenge);
+
+                    // Create credentials
+                    const credential = await navigator.credentials.create({
+                        publicKey: {
+                            challenge,
+                            rp: {
+                                name: 'ETE Movil',
+                                id: window.location.hostname,
+                            },
+                            user: {
+                                id: new Uint8Array(16), // User ID should be unique/persistent
+                                name: 'admin', // Should be current user's username
+                                displayName: 'Usuario Admin',
+                            },
+                            pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
+                            authenticatorSelection: {
+                                authenticatorAttachment: 'platform',
+                                userVerification: 'required',
+                            },
+                            timeout: 60000,
+                            attestation: 'none',
+                        }
+                    });
+
+                    if (credential) {
+                        setBiometricEnabled(true);
+                        localStorage.setItem('biometricEnabled', 'true');
+                        toast('Acceso biométrico activado y registrado');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    toast('Error al registrar huella');
                 }
             } else {
                 toast('Tu navegador no soporta biométrico');
@@ -288,7 +323,7 @@ export default function SettingsPage() {
                 </button>
             </div>
 
-            <p className="text-center text-[8px] text-gray-600 font-bold uppercase tracking-[0.2em]">DBSISMOVIL v1.0.0 • BY Empresa Tecnológica del Este</p>
+            <p className="text-center text-[8px] text-gray-600 font-bold uppercase tracking-[0.2em]">ETE Movil v1.0.0 • BY Empresa Tecnológica del Este</p>
 
             {/* PWA Instructions Modal */}
             {showPWAModal && (

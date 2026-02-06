@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
         // Query user by username
         const result = await query(
-            'SELECT id, nombre, username, email, password_hash, activo FROM usuarios WHERE username = $1',
+            'SELECT id, nombre, username, email, password_hash, activo, token_version FROM usuarios WHERE username = $1',
             [username]
         );
 
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
             userId: user.id,
             nombre: user.nombre,
             email: user.email,
+            token_version: user.token_version || 1,
             loginAt: new Date().toISOString(),
         };
 

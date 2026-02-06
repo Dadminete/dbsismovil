@@ -11,6 +11,8 @@ export default function Navbar() {
     const pathname = usePathname();
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
+    if (pathname === '/login') return null;
+
     const links = [
         { href: '/', icon: Home, label: 'Dashboard' },
         { href: '/clients', icon: Users, label: 'Clientes' },

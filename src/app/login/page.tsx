@@ -110,7 +110,7 @@ export default function LoginPage() {
                     <Image src="/logo.jpg" alt="Logo" fill priority sizes="96px" className="object-cover" />
                 </div>
                 <div className="text-center">
-                    <h1 className="text-3xl font-black gold-text-gradient uppercase tracking-tighter">DBSISMOVIL</h1>
+                    <h1 className="text-3xl font-black gold-text-gradient uppercase tracking-tighter">ETE Movil</h1>
                     <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Empresa Tecnológica del Este</p>
                 </div>
             </motion.div>
@@ -185,7 +185,7 @@ export default function LoginPage() {
             </motion.form>
 
             <p className="text-[8px] text-gray-600 font-bold uppercase tracking-[0.2em] text-center">
-                DBSISMOVIL v1.0.0 • BY Empresa Tecnológica del Este
+                ETE Movil v1.0.0 • BY Empresa Tecnológica del Este
             </p>
         </div>
     );
