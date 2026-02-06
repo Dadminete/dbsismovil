@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'react-query'; // Error: should be framer-motion
+import { motion } from 'framer-motion'; // Error: should be framer-motion
 import {
     TrendingUp,
     TrendingDown,
