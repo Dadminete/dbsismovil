@@ -91,7 +91,8 @@ export default function FinancePage() {
                     </div>
 
                     <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-none">
-                        {data.cajas.map((c: any) => (
+                        {/* 1. Caja Principal */}
+                        {data.cajas.filter((c: any) => c.nombre === 'Caja Principal').map((c: any) => (
                             <div key={c.id} className="min-w-[200px] glass p-5 rounded-3xl border border-white/5 flex flex-col gap-3">
                                 <div className="flex items-center gap-2 text-gold">
                                     <Wallet size={16} />
@@ -102,6 +103,34 @@ export default function FinancePage() {
                                 </p>
                             </div>
                         ))}
+
+                        {/* 2. Papeleria */}
+                        {data.cajas.filter((c: any) => c.nombre === 'Papeleria').map((c: any) => (
+                            <div key={c.id} className="min-w-[200px] glass p-5 rounded-3xl border border-white/5 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-gold">
+                                    <Wallet size={16} />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">{c.nombre}</span>
+                                </div>
+                                <p className="text-lg font-black tracking-tight italic">
+                                    RD$ {parseFloat(c.saldo_actual).toLocaleString()}
+                                </p>
+                            </div>
+                        ))}
+
+                        {/* 3. Other Cajas */}
+                        {data.cajas.filter((c: any) => c.nombre !== 'Caja Principal' && c.nombre !== 'Papeleria').map((c: any) => (
+                            <div key={c.id} className="min-w-[200px] glass p-5 rounded-3xl border border-white/5 flex flex-col gap-3">
+                                <div className="flex items-center gap-2 text-gold">
+                                    <Wallet size={16} />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">{c.nombre}</span>
+                                </div>
+                                <p className="text-lg font-black tracking-tight italic">
+                                    RD$ {parseFloat(c.saldo_actual).toLocaleString()}
+                                </p>
+                            </div>
+                        ))}
+
+                        {/* 4. Banks */}
                         {data.accounts.map((a: any) => (
                             <div key={a.id} className="min-w-[200px] glass p-5 rounded-3xl border border-white/5 flex flex-col gap-3">
                                 <div className="flex items-center gap-2 text-blue-400">
@@ -109,9 +138,12 @@ export default function FinancePage() {
                                     <span className="text-[10px] font-black uppercase tracking-wider">{a.banco_nombre}</span>
                                 </div>
                                 <p className="text-lg font-black tracking-tight italic">
-                                    {a.numero_cuenta}
+                                    RD$ {parseFloat(a.saldo_actual || 0).toLocaleString()}
                                 </p>
-                                <span className="text-[9px] text-gray-500 font-bold uppercase truncate">{a.nombre_oficial_cuenta}</span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[9px] text-gray-500 font-bold uppercase truncate max-w-[80px]">{a.nombre_oficial_cuenta}</span>
+                                    <span className="text-[9px] text-gray-600 font-mono">{a.numero_cuenta}</span>
+                                </div>
                             </div>
                         ))}
                     </div>

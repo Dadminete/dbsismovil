@@ -9,7 +9,14 @@ export async function GET() {
             query("SELECT COALESCE(SUM(monto), 0) as total FROM movimientos_contables WHERE tipo = 'ingreso' AND DATE(fecha) = CURRENT_DATE"),
             query("SELECT COALESCE(SUM(monto), 0) as total FROM movimientos_contables WHERE tipo = 'gasto' AND DATE(fecha) = CURRENT_DATE"),
             query("SELECT id, nombre, saldo_actual FROM cajas WHERE activa = true"),
-            query("SELECT cb.id, cb.numero_cuenta, cb.nombre_oficial_cuenta, b.nombre as banco_nombre FROM cuentas_bancarias cb JOIN banks b ON cb.bank_id = b.id WHERE cb.activo = true"),
+            query(`
+                SELECT cb.id, cb.numero_cuenta, cb.nombre_oficial_cuenta, b.nombre as banco_nombre, cc.saldo_actual
+                FROM cuentas_bancarias cb 
+                JOIN banks b ON cb.bank_id = b.id
+                LEFT JOIN cuentas_contables cc ON cb.cuenta_contable_id = cc.id
+                WHERE cb.activo = true
+                ORDER BY b.nombre ASC
+            `),
             query(`
                 SELECT m.*, c.nombre as categoria_nombre 
                 FROM movimientos_contables m 
