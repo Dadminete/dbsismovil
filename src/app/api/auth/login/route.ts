@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { cookies } from 'next/headers';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
     try {
@@ -27,9 +28,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Usuario desactivado' }, { status: 401 });
         }
 
-        // For now, compare plaintext password (as per current DB structure)
-        // TODO: Implement proper password hashing
-        if (user.password_hash !== password) {
+        // Support both hashed and plaintext (fallback) passwords
+        let isPasswordValid = false;
+
+        if (user.password_hash.startsWith('$2b$')) {
+            // It's a BCrypt hash
+            isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        } else {
+            // Fallback for legacy plaintext passwords
+            isPasswordValid = user.password_hash === password;
+        }
+
+        if (!isPasswordValid) {
             return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
         }
 
