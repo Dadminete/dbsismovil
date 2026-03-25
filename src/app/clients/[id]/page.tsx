@@ -157,7 +157,7 @@ export default function ClientDetailsPage() {
                     <div className="w-28 h-28 rounded-[35px] bg-gold/10 border-2 border-gold/20 flex items-center justify-center text-4xl text-gold font-black italic shadow-2xl relative overflow-hidden cursor-pointer hover:border-gold transition-all" onClick={() => (formData.foto_url || client.foto_url) && !imgError && setIsPhotoModalOpen(true)}>
                         {(formData.foto_url || client.foto_url) && !imgError ? (
                             <img
-                                src={formData.foto_url || client.foto_url}
+                                src={formData.foto_url || (client.foto_url ? `/api/uploads/${client.foto_url.split('/').pop()}` : '')}
                                 alt="Profile"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                                 onError={() => setImgError(true)}
@@ -384,7 +384,7 @@ export default function ClientDetailsPage() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <img
-                                src={formData.foto_url || client.foto_url}
+                                src={formData.foto_url || (client.foto_url ? `/api/uploads/${client.foto_url.split('/').pop()}` : '')}
                                 alt={`${client.nombre} ${client.apellidos || ''}`.trim()}
                                 className="w-full h-auto max-h-[80vh] object-contain rounded-3xl shadow-2xl"
                             />

@@ -78,7 +78,7 @@ export default function ClientsPage() {
                                     <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/20 flex items-center justify-center text-gold font-black italic shadow-lg overflow-hidden">
                                         {client.foto_url && !imageErrors[client.id] ? (
                                             <img
-                                                src={client.foto_url}
+                                                src={`/api/uploads/${client.foto_url.split('/').pop()}`}
                                                 alt={`${client.nombre} ${client.apellidos || ''}`.trim()}
                                                 className="w-full h-full object-cover"
                                                 onError={() =>
