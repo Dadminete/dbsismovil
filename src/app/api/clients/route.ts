@@ -11,6 +11,7 @@ export async function GET() {
         c.telefono, 
         c.email,
         c.codigo_cliente,
+        c.foto_url,
         EXISTS (
           SELECT 1 FROM facturas_clientes f 
           WHERE f.cliente_id = c.id AND f.estado IN ('pendiente', 'parcial')

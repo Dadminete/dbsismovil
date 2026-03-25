@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Save, CreditCard, Calendar, FileText, CheckCircle2, Clock, Edit3, Trash2, DollarSign, Camera } from 'lucide-react';
+import { ChevronLeft, Save, CreditCard, Calendar, FileText, CheckCircle2, Clock, Edit3, Trash2, DollarSign, Camera, X } from 'lucide-react';
 import PaymentModal from '@/app/components/PaymentModal';
 
 export default function ClientDetailsPage() {
@@ -14,6 +14,7 @@ export default function ClientDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [imgError, setImgError] = useState(false);
+    const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         nombre: '',
         apellidos: '',
@@ -153,12 +154,12 @@ export default function ClientDetailsPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 blur-3xl rounded-full"></div>
 
                 <div className="relative group">
-                    <div className="w-28 h-28 rounded-[35px] bg-gold/10 border-2 border-gold/20 flex items-center justify-center text-4xl text-gold font-black italic shadow-2xl relative overflow-hidden">
+                    <div className="w-28 h-28 rounded-[35px] bg-gold/10 border-2 border-gold/20 flex items-center justify-center text-4xl text-gold font-black italic shadow-2xl relative overflow-hidden cursor-pointer hover:border-gold transition-all" onClick={() => (formData.foto_url || client.foto_url) && !imgError && setIsPhotoModalOpen(true)}>
                         {(formData.foto_url || client.foto_url) && !imgError ? (
                             <img
                                 src={formData.foto_url || client.foto_url}
                                 alt="Profile"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                                 onError={() => setImgError(true)}
                             />
                         ) : (
@@ -366,6 +367,35 @@ export default function ClientDetailsPage() {
                         onClose={() => setIsPaymentModalOpen(false)}
                         onSuccess={() => fetchData()}
                     />
+                )}
+                {isPhotoModalOpen && (formData.foto_url || client.foto_url) && !imgError && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+                        onClick={() => setIsPhotoModalOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            className="relative max-w-2xl max-h-[80vh] w-full"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img
+                                src={formData.foto_url || client.foto_url}
+                                alt={`${client.nombre} ${client.apellidos || ''}`.trim()}
+                                className="w-full h-auto max-h-[80vh] object-contain rounded-3xl shadow-2xl"
+                            />
+                            <button
+                                onClick={() => setIsPhotoModalOpen(false)}
+                                className="absolute -top-12 right-0 glass p-3 rounded-2xl text-gold hover:text-white transition-colors active:scale-95"
+                            >
+                                <X size={24} />
+                            </button>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

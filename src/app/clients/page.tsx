@@ -11,6 +11,7 @@ export default function ClientsPage() {
     const [clients, setClients] = useState([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
+    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         async function fetchClients() {
@@ -74,8 +75,22 @@ export default function ClientsPage() {
                                 className="glass rounded-3xl p-4 flex items-center justify-between group active:scale-95 transition-all"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/20 flex items-center justify-center text-gold font-black italic shadow-lg">
-                                        {client.nombre[0]}{client.apellidos?.[0] || ''}
+                                    <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/20 flex items-center justify-center text-gold font-black italic shadow-lg overflow-hidden">
+                                        {client.foto_url && !imageErrors[client.id] ? (
+                                            <img
+                                                src={client.foto_url}
+                                                alt={`${client.nombre} ${client.apellidos || ''}`.trim()}
+                                                className="w-full h-full object-cover"
+                                                onError={() =>
+                                                    setImageErrors((prev) => ({
+                                                        ...prev,
+                                                        [client.id]: true,
+                                                    }))
+                                                }
+                                            />
+                                        ) : (
+                                            <>{client.nombre[0]}{client.apellidos?.[0] || ''}</>
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-sm group-hover:text-gold transition-colors">
