@@ -4,10 +4,10 @@ import path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+    { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    const filename = params.filename;
+      const { filename } = await params;
     
     // Ruta segura al archivo en public/uploads
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
@@ -42,7 +42,7 @@ export async function GET(
         'Cache-Control': 'public, max-age=31536000', // 1 año
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'File not found' },
       { status: 404 }
