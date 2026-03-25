@@ -36,7 +36,10 @@ export default function Navbar() {
 
                     {/* Dollar Button (Quick Action) */}
                     <button
-                        onClick={() => setIsTransactionModalOpen(true)}
+                        onClick={() => {
+                            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+                            setIsTransactionModalOpen(true);
+                        }}
                         className="relative flex flex-col items-center gap-1 group active:scale-95 transition-all"
                     >
                         <div className={`p-2 rounded-xl transition-all duration-300 ${isTransactionModalOpen ? 'text-gold' : 'text-gray-400'}`}>

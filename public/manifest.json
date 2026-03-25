@@ -1,20 +1,24 @@
 {
-  "name": "dbsismovil",
-  "short_name": "DBSIS",
+  "name": "DBSISMOVIL",
+  "short_name": "DBSISMOVIL",
+  "description": "Sistema de Gestión Móvil para Cobradores y Administración",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#D4AF37",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/logo.jpg",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     },
     {
-       "src": "/logo.jpg",
-       "sizes": "512x512",
-       "type": "image/jpeg"
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#d4af37"
+  ]
 }

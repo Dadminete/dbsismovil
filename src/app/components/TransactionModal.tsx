@@ -294,6 +294,15 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
                                     </>
                                 )}
                             </button>
+
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="py-2 text-[10px] text-gray-500 font-extrabold uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2"
+                            >
+                                <X size={12} />
+                                Regresar al Menú principal
+                            </button>
                         </form>
                     </div>
                 </motion.div>
