@@ -6,6 +6,12 @@ import { TrendingUp, Users, AlertCircle, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useRef } from 'react';
 
+const LOCALE = 'es-DO';
+
+const formatNumber = (value: number) => value.toLocaleString(LOCALE);
+const formatCurrency = (value: number) => `$${formatNumber(value)}`;
+const formatDate = (value: string | number | Date) => new Date(value).toLocaleDateString(LOCALE);
+
 export default function DashboardView({ stats }: { stats: any }) {
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -99,7 +105,7 @@ export default function DashboardView({ stats }: { stats: any }) {
             </div>
             <div>
               <p className="text-[9px] text-gray-500 font-black uppercase tracking-tight">Facturas Pendientes</p>
-              <h3 className="text-2xl font-black">${stats.pendingInvoices.total.toLocaleString()}</h3>
+              <h3 className="text-2xl font-black">{formatCurrency(stats.pendingInvoices.total)}</h3>
               <p className="text-[8px] text-red-400 font-black italic mt-1">Cantidad: {stats.pendingInvoices.count}</p>
             </div>
           </motion.div>
@@ -117,8 +123,8 @@ export default function DashboardView({ stats }: { stats: any }) {
               <h3 className="text-lg font-black italic gold-text-gradient uppercase tracking-tighter">I/G del Mes En Curso</h3>
             </div>
             <div className="text-right">
-              <p className="text-[9px] font-black text-green-400 uppercase tracking-tighter italic">Ingresos: ${income.toLocaleString()}</p>
-              <p className="text-[9px] font-black text-red-400 uppercase tracking-tighter italic">Gastos: ${expenses.toLocaleString()}</p>
+              <p className="text-[9px] font-black text-green-400 uppercase tracking-tighter italic">Ingresos: {formatCurrency(income)}</p>
+              <p className="text-[9px] font-black text-red-400 uppercase tracking-tighter italic">Gastos: {formatCurrency(expenses)}</p>
             </div>
           </div>
 
@@ -171,8 +177,8 @@ export default function DashboardView({ stats }: { stats: any }) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-black text-gold italic">${parseFloat(activity.monto).toLocaleString()}</p>
-                  <p className="text-[8px] text-gray-600 font-bold uppercase">{new Date(activity.created_at).toLocaleDateString()}</p>
+                  <p className="text-sm font-black text-gold italic">{formatCurrency(parseFloat(activity.monto))}</p>
+                  <p className="text-[8px] text-gray-600 font-bold uppercase">{formatDate(activity.created_at)}</p>
                 </div>
               </motion.div>
             ))

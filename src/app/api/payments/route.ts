@@ -69,3 +69,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function GET(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const factura_id = searchParams.get('factura_id');
+        const cliente_id = searchParams.get('cliente_id');
+
+        let res;
+        if (factura_id) {
+            res = await query('SELECT * FROM pagos_clientes WHERE factura_id = $1 ORDER BY created_at DESC', [factura_id]);
+        } else if (cliente_id) {
+            res = await query('SELECT * FROM pagos_clientes WHERE cliente_id = $1 ORDER BY created_at DESC', [cliente_id]);
+        } else {
+            res = await query('SELECT * FROM pagos_clientes ORDER BY created_at DESC LIMIT 50');
+        }
+
+        return NextResponse.json(res.rows);
+    } catch (error) {
+        console.error('Error fetching payments:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}

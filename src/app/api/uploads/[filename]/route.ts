@@ -8,13 +8,17 @@ export async function GET(
 ) {
   try {
       const { filename } = await params;
+
+      if (!filename || filename.includes('=') || filename.includes('..')) {
+        return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
+      }
     
     // Ruta segura al archivo en public/uploads
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    const filePath = path.join(uploadsDir, filename);
+      const filePath = path.resolve(uploadsDir, filename);
     
     // Prevenir path traversal
-    if (!filePath.startsWith(uploadsDir)) {
+      if (!filePath.startsWith(path.resolve(uploadsDir) + path.sep)) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

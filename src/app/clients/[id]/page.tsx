@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Save, CreditCard, Calendar, FileText, CheckCircle2, Clock, Edit3, Trash2, DollarSign, Camera, X } from 'lucide-react';
+import { ChevronLeft, Save, CreditCard, Calendar, FileText, CheckCircle2, Clock, Edit3, Trash2, DollarSign, Camera, X, Printer } from 'lucide-react';
+import { getImageUrl } from '@/lib/imageHelper';
 import PaymentModal from '@/app/components/PaymentModal';
+import InvoicePrint from '@/app/components/InvoicePrint';
+import { useRef } from 'react';
 
 export default function ClientDetailsPage() {
     const { id } = useParams();
@@ -30,6 +33,11 @@ export default function ClientDetailsPage() {
     // Payment Modal State
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+
+    // Print Reference
+    const printRef = useRef<HTMLDivElement>(null);
+    const [invoiceToPrint, setInvoiceToPrint] = useState<any>(null);
+    const [paymentsToPrint, setPaymentsToPrint] = useState<any[]>([]);
 
     const fetchData = async () => {
         try {
@@ -64,6 +72,12 @@ export default function ClientDetailsPage() {
     useEffect(() => {
         setMounted(true);
         fetchData();
+
+        const handlePrintEvent = (e: any) => {
+            handlePrint(e.detail);
+        };
+        window.addEventListener('print-invoice', handlePrintEvent);
+        return () => window.removeEventListener('print-invoice', handlePrintEvent);
     }, [id]);
 
     const handleUpdateClient = async (e: React.FormEvent) => {
@@ -129,6 +143,26 @@ export default function ClientDetailsPage() {
         setIsPaymentModalOpen(true);
     };
 
+    const handlePrint = async (invoice: any) => {
+        try {
+            const res = await fetch(`/api/payments?factura_id=${invoice.id}`);
+            const payments = await res.json();
+            setPaymentsToPrint(payments);
+            setInvoiceToPrint(invoice);
+            setTimeout(() => {
+                window.print();
+            }, 200);
+        } catch (error) {
+            console.error('Error fetching payments for print:', error);
+            // Fallback to print without payments
+            setPaymentsToPrint([]);
+            setInvoiceToPrint(invoice);
+            setTimeout(() => {
+                window.print();
+            }, 200);
+        }
+    };
+
     if (loading) return (
         <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gold"></div>
@@ -157,7 +191,7 @@ export default function ClientDetailsPage() {
                     <div className="w-28 h-28 rounded-[35px] bg-gold/10 border-2 border-gold/20 flex items-center justify-center text-4xl text-gold font-black italic shadow-2xl relative overflow-hidden cursor-pointer hover:border-gold transition-all" onClick={() => (formData.foto_url || client.foto_url) && !imgError && setIsPhotoModalOpen(true)}>
                         {(formData.foto_url || client.foto_url) && !imgError ? (
                             <img
-                                src={formData.foto_url || (client.foto_url ? `/api/uploads/${client.foto_url.split('/').pop()}` : '')}
+                                src={getImageUrl(formData.foto_url || client.foto_url)}
                                 alt="Profile"
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                                 onError={() => setImgError(true)}
@@ -345,12 +379,27 @@ export default function ClientDetailsPage() {
                                         </span>
                                     </div>
 
-                                    {invoice.estado !== 'pagada' && (
+                                    {invoice.estado !== 'pagada' ? (
                                         <button
                                             onClick={() => openPaymentModal(invoice)}
                                             className="bg-gold/10 hover:bg-gold text-gold hover:text-black border border-gold/30 p-2 px-4 rounded-xl text-[10px] font-black uppercase transition-all duration-300 flex items-center gap-2"
                                         >
                                             <DollarSign size={12} /> Pagar
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handlePrint(invoice)}
+                                            className="bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 p-2 px-4 rounded-xl text-[10px] font-black uppercase transition-all duration-300 flex items-center gap-2"
+                                        >
+                                            <Printer size={12} /> Imprimir
+                                        </button>
+                                    )}
+                                    {invoice.estado !== 'pagada' && (
+                                        <button
+                                            onClick={() => handlePrint(invoice)}
+                                            className="bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 p-2 px-3 rounded-xl transition-all active:scale-95"
+                                        >
+                                            <Printer size={12} />
                                         </button>
                                     )}
                                 </div>
@@ -359,6 +408,9 @@ export default function ClientDetailsPage() {
                     )}
                 </div>
             </section>
+
+            {/* Print Hidden Component */}
+            <InvoicePrint ref={printRef} invoice={invoiceToPrint} client={client} payments={paymentsToPrint} />
 
             <AnimatePresence>
                 {isPaymentModalOpen && selectedInvoice && (
@@ -384,7 +436,7 @@ export default function ClientDetailsPage() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <img
-                                src={formData.foto_url || (client.foto_url ? `/api/uploads/${client.foto_url.split('/').pop()}` : '')}
+                                src={getImageUrl(formData.foto_url || client.foto_url)}
                                 alt={`${client.nombre} ${client.apellidos || ''}`.trim()}
                                 className="w-full h-auto max-h-[80vh] object-contain rounded-3xl shadow-2xl"
                             />
