@@ -30,6 +30,7 @@ export default function FinancePage() {
     const [monthlyData, setMonthlyData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | null>(null);
 
     const years = [2024, 2025, 2026]; // Simplified year list
     const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -110,9 +111,15 @@ export default function FinancePage() {
                         
                         <div className="flex items-end justify-between h-56 gap-2 relative z-10 pt-8">
                             {monthlyData.map((m: any, i: number) => (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
-                                    {/* Tooltip on Hover */}
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 z-20 pointer-events-none whitespace-nowrap">
+                                <div 
+                                    key={i} 
+                                    className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative cursor-pointer"
+                                    onClick={() => setSelectedMonthIdx(selectedMonthIdx === i ? null : i)}
+                                >
+                                    {/* Tooltip on Hover/Select */}
+                                    <div className={`absolute -top-6 left-1/2 -translate-x-1/2 transition-opacity bg-black/80 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 z-20 pointer-events-none whitespace-nowrap ${
+                                        selectedMonthIdx === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                    }`}>
                                         <p className="text-[7px] font-black text-cyan-400">In: {formatCurrency(m.income)}</p>
                                         <p className="text-[7px] font-black text-rose-400">Out: {formatCurrency(m.expense)}</p>
                                     </div>
@@ -133,7 +140,7 @@ export default function FinancePage() {
                                             className="w-1 sm:w-1.5 bg-gradient-to-t from-rose-600 to-rose-300 rounded-full shadow-[0_0_10px_rgba(225,29,72,0.3)]"
                                         />
                                     </div>
-                                    <span className="text-[7px] font-black text-white/40 group-hover:text-gold transition-colors">{monthNames[i]}</span>
+                                    <span className={`text-[7px] font-black transition-colors ${selectedMonthIdx === i ? 'text-gold' : 'text-white/40 group-hover:text-gold'}`}>{monthNames[i]}</span>
                                 </div>
                             ))}
                         </div>
