@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Users, Settings, DollarSign, PieChart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import TransactionModal from './TransactionModal';
 
 export default function Navbar() {
     const pathname = usePathname();
+    const router = useRouter();
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
     if (pathname === '/login') return null;
@@ -88,6 +90,7 @@ export default function Navbar() {
             <TransactionModal
                 isOpen={isTransactionModalOpen}
                 onClose={() => setIsTransactionModalOpen(false)}
+                onSuccess={() => router.refresh()}
             />
         </>
     );

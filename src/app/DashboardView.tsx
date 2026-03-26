@@ -78,9 +78,45 @@ export default function DashboardView({ stats }: { stats: any }) {
         <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Resumen General</h2>
 
         <div className="grid grid-cols-2 gap-4">
+          {/* Papelería Card */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="glass p-5 rounded-[30px] flex flex-col gap-3 relative overflow-hidden"
+          >
+            <div className="absolute -top-4 -right-4 w-12 h-12 bg-blue-500/5 blur-xl rounded-full"></div>
+            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <p className="text-[9px] text-gray-500 font-black uppercase tracking-tight italic">Ingreso Papelería</p>
+              <h3 className="text-lg font-black">{formatCurrency(stats.papeleria.todayIncome)}</h3>
+              <p className="text-[8px] text-blue-400 font-black italic mt-1 uppercase">Monto Actual: {formatCurrency(stats.papeleria.balance)}</p>
+            </div>
+          </motion.div>
+
+          {/* Caja Principal Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass p-5 rounded-[30px] flex flex-col gap-3 relative overflow-hidden"
+          >
+            <div className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-500/5 blur-xl rounded-full"></div>
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <RefreshCw size={20} />
+            </div>
+            <div>
+              <p className="text-[9px] text-gray-500 font-black uppercase tracking-tight italic">Ingreso Principal</p>
+              <h3 className="text-lg font-black">{formatCurrency(stats.principal.todayIncome)}</h3>
+              <p className="text-[8px] text-emerald-400 font-black italic mt-1 uppercase">Monto Actual: {formatCurrency(stats.principal.balance)}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15 }}
             className="glass p-5 rounded-[30px] flex flex-col gap-3 relative overflow-hidden"
           >
             <div className="absolute -top-4 -right-4 w-12 h-12 bg-gold/5 blur-xl rounded-full"></div>
@@ -96,7 +132,7 @@ export default function DashboardView({ stats }: { stats: any }) {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
             className="glass p-5 rounded-[30px] flex flex-col gap-3 relative overflow-hidden"
           >
             <div className="absolute -top-4 -right-4 w-12 h-12 bg-red-500/5 blur-xl rounded-full"></div>

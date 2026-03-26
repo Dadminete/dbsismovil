@@ -18,14 +18,28 @@ async function getDashboardStats() {
 
     const incomeRes = await query(`
       SELECT SUM(monto) as total 
-      FROM pagos_clientes 
-      WHERE created_at >= date_trunc('month', current_date)
+      FROM movimientos_contables 
+      WHERE tipo = 'ingreso' AND fecha >= date_trunc('month', current_date)
+    `);
+
+    // Papelería Today's Income and Current Balance
+    const papeleriaRes = await query(`
+      SELECT 
+        (SELECT SUM(total) FROM ventas_papeleria WHERE caja_id = (SELECT id FROM cajas WHERE nombre = 'Papelería') AND created_at >= current_date) as today_income,
+        (SELECT saldo_actual FROM cajas WHERE nombre = 'Papelería') as balance
+    `);
+
+    // Caja Principal Today's Income and Current Balance
+    const principalRes = await query(`
+      SELECT 
+        (SELECT SUM(monto) FROM pagos_clientes WHERE caja_id = (SELECT id FROM cajas WHERE nombre = 'Caja Principal') AND created_at >= current_date) as today_income,
+        (SELECT saldo_actual FROM cajas WHERE nombre = 'Caja Principal') as balance
     `);
 
     const expensesRes = await query(`
       SELECT SUM(monto) as total 
-      FROM pagos_cuentas_por_pagar 
-      WHERE created_at >= date_trunc('month', current_date)
+      FROM movimientos_contables 
+      WHERE tipo = 'gasto' AND fecha >= date_trunc('month', current_date)
     `);
 
     const recentActivityRes = await query(`
@@ -44,7 +58,15 @@ async function getDashboardStats() {
       },
       monthlyIncome: parseFloat(incomeRes.rows[0].total || '0'),
       monthlyExpenses: parseFloat(expensesRes.rows[0].total || '0'),
-      recentActivity: recentActivityRes.rows
+      recentActivity: recentActivityRes.rows,
+      papeleria: {
+        todayIncome: parseFloat(papeleriaRes.rows[0].today_income || '0'),
+        balance: parseFloat(papeleriaRes.rows[0].balance || '0')
+      },
+      principal: {
+        todayIncome: parseFloat(principalRes.rows[0].today_income || '0'),
+        balance: parseFloat(principalRes.rows[0].balance || '0')
+      }
     };
   } catch (error) {
     console.error('Error fetching dashboard stats directly:', error);

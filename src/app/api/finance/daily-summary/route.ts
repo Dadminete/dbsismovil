@@ -12,10 +12,16 @@ export async function GET() {
             query("SELECT COALESCE(SUM(monto), 0) as total FROM movimientos_contables WHERE tipo = 'gasto' AND DATE(fecha) = CURRENT_DATE"),
             query("SELECT id, nombre, saldo_actual FROM cajas WHERE activa = true"),
             query(`
-                SELECT cb.id, cb.numero_cuenta, cb.nombre_oficial_cuenta, b.nombre as banco_nombre, cc.saldo_actual
-                FROM cuentas_bancarias cb 
-                JOIN banks b ON cb.bank_id = b.id
-                LEFT JOIN cuentas_contables cc ON cb.cuenta_contable_id = cc.id
+                SELECT 
+                    cb.id, cb.numero_cuenta, cb.nombre_oficial_cuenta, cb.tipo_cuenta, cb.moneda,
+                    COALESCE(b.nombre, 'Sin Banco') as banco_nombre,
+                    COALESCE((
+                        SELECT SUM(CASE WHEN tipo = 'ingreso' THEN monto ELSE -monto END)
+                        FROM movimientos_contables
+                        WHERE cuenta_bancaria_id = cb.id
+                    ), 0) as saldo_actual
+                FROM cuentas_bancarias cb
+                LEFT JOIN banks b ON cb.bank_id = b.id
                 WHERE cb.activo = true
                 ORDER BY b.nombre ASC
             `),
