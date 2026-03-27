@@ -13,7 +13,46 @@ export async function POST(request: Request) {
 
         // Query user by username
         const result = await query(
-            'SELECT id, nombre, username, email, password_hash, activo, token_version FROM usuarios WHERE username = $1',
+            `SELECT 
+                u.id,
+                u.nombre,
+                u.username,
+                u.email,
+                u.password_hash,
+                u.activo,
+                u.token_version,
+                (
+                    SELECT r.nombre_rol
+                    FROM usuarios_roles ur
+                    JOIN roles r ON r.id = ur.rol_id
+                    WHERE ur.usuario_id = u.id
+                        AND ur.activo = true
+                        AND r.activo = true
+                    ORDER BY r.prioridad DESC, ur.fecha_asignacion DESC
+                    LIMIT 1
+                ) as rol,
+                (
+                    EXISTS (
+                        SELECT 1
+                        FROM usuarios_roles ur
+                        JOIN roles r ON r.id = ur.rol_id
+                        WHERE ur.usuario_id = u.id
+                            AND ur.activo = true
+                            AND r.activo = true
+                            AND lower(r.nombre_rol) LIKE '%tecnico%'
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM usuarios_permisos up
+                        JOIN permisos p ON p.id = up.permiso_id
+                        WHERE up.usuario_id = u.id
+                            AND up.activo = true
+                            AND p.activo = true
+                            AND lower(p.nombre_permiso) LIKE '%tecnico%'
+                    )
+                ) as is_tecnico
+            FROM usuarios u
+            WHERE u.username = $1`,
             [username]
         );
 
@@ -48,6 +87,8 @@ export async function POST(request: Request) {
             userId: user.id,
             nombre: user.nombre,
             email: user.email,
+            rol: user.rol || null,
+            isTecnico: Boolean(user.is_tecnico),
             token_version: user.token_version || 1,
             loginAt: new Date().toISOString(),
         };
@@ -64,7 +105,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            user: { id: user.id, nombre: user.nombre, email: user.email },
+            user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol || null, isTecnico: Boolean(user.is_tecnico) },
         });
     } catch (error) {
         console.error('Login error:', error);

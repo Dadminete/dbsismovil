@@ -24,6 +24,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let isTecnico = false;
+
   // Global Session Validation
   const cookieStore = await cookies();
   const session = cookieStore.get("session");
@@ -59,6 +61,41 @@ export default async function RootLayout({
           }
         }
       }
+
+      const roleText = String(sessionData.rol || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
+      if (sessionData.isTecnico || roleText.includes('tecnico')) {
+        isTecnico = true;
+      } else if (sessionData.userId) {
+        const tecnicoRes = await query(
+          `SELECT (
+              EXISTS (
+                SELECT 1
+                FROM usuarios_roles ur
+                JOIN roles r ON r.id = ur.rol_id
+                WHERE ur.usuario_id = $1
+                  AND ur.activo = true
+                  AND r.activo = true
+                  AND lower(r.nombre_rol) LIKE '%tecnico%'
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM usuarios_permisos up
+                JOIN permisos p ON p.id = up.permiso_id
+                WHERE up.usuario_id = $1
+                  AND up.activo = true
+                  AND p.activo = true
+                  AND lower(p.nombre_permiso) LIKE '%tecnico%'
+              )
+            ) AS is_tecnico`,
+          [sessionData.userId]
+        );
+
+        isTecnico = Boolean(tecnicoRes.rows[0]?.is_tecnico);
+      }
     } catch (e) {
       // Ignore json parse errors
     }
@@ -70,7 +107,7 @@ export default async function RootLayout({
         <main className="max-w-lg mx-auto px-4 pt-8">
           {children}
         </main>
-        <Navbar />
+        <Navbar isTecnico={isTecnico} />
       </body>
     </html>
   );

@@ -8,7 +8,12 @@ export async function GET(
     try {
         const { id } = await params;
         const res = await query(
-            'SELECT * FROM facturas_clientes WHERE cliente_id = $1 ORDER BY fecha_factura DESC',
+            `SELECT *
+             FROM facturas_clientes
+             WHERE cliente_id = $1
+             ORDER BY
+                CASE WHEN LOWER(estado) = 'pagada' THEN 0 ELSE 1 END,
+                fecha_factura DESC`,
             [id]
         );
         return NextResponse.json(res.rows);

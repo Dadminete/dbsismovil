@@ -1,5 +1,16 @@
 import { query } from '@/lib/db';
 import DashboardView from './DashboardView';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+
+function isTecnicoRole(role?: string | null) {
+  if (!role) return false;
+  return role
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .includes('tecnico');
+}
 
 async function getDashboardStats() {
   try {
@@ -75,6 +86,63 @@ async function getDashboardStats() {
 }
 
 export default async function Dashboard() {
+  const cookieStore = await cookies();
+  const session = cookieStore.get('session');
+
+  if (session) {
+    try {
+      const sessionData = JSON.parse(session.value);
+      let currentRole = sessionData.rol as string | null | undefined;
+      let isTecnico = Boolean(sessionData.isTecnico);
+
+      if ((!currentRole || !isTecnico) && sessionData.userId) {
+        const roleRes = await query(
+          `SELECT 
+            (
+              SELECT r.nombre_rol
+              FROM usuarios_roles ur
+              JOIN roles r ON r.id = ur.rol_id
+              WHERE ur.usuario_id = $1
+                AND ur.activo = true
+                AND r.activo = true
+              ORDER BY r.prioridad DESC, ur.fecha_asignacion DESC
+              LIMIT 1
+            ) AS nombre_rol,
+            (
+              EXISTS (
+                SELECT 1
+                FROM usuarios_roles ur
+                JOIN roles r ON r.id = ur.rol_id
+                WHERE ur.usuario_id = $1
+                  AND ur.activo = true
+                  AND r.activo = true
+                  AND lower(r.nombre_rol) LIKE '%tecnico%'
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM usuarios_permisos up
+                JOIN permisos p ON p.id = up.permiso_id
+                WHERE up.usuario_id = $1
+                  AND up.activo = true
+                  AND p.activo = true
+                  AND lower(p.nombre_permiso) LIKE '%tecnico%'
+              )
+            ) AS is_tecnico`,
+          [sessionData.userId]
+        );
+
+        currentRole = roleRes.rows[0]?.nombre_rol;
+        isTecnico = Boolean(roleRes.rows[0]?.is_tecnico);
+      }
+
+      if (isTecnico || isTecnicoRole(currentRole)) {
+        redirect('/clients?estado=pagado');
+      }
+    } catch {
+      // Ignore malformed sessions and continue to dashboard fallback.
+    }
+  }
+
   const stats = await getDashboardStats();
 
   if (!stats) {

@@ -2,17 +2,37 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, UserCircle, ChevronRight, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { getImageUrl } from '@/lib/imageHelper';
 
+type ClientStatusFilter = 'todos' | 'pagado' | 'pendiente';
+
 export default function ClientsPage() {
     const router = useRouter();
-    const [clients, setClients] = useState([]);
+    const searchParams = useSearchParams();
+    const [clients, setClients] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+    const [statusFilter, setStatusFilter] = useState<ClientStatusFilter>('todos');
+
+    useEffect(() => {
+        const estadoParam = searchParams.get('estado')?.toLowerCase();
+
+        if (estadoParam === 'pagado') {
+            setStatusFilter('pagado');
+            return;
+        }
+
+        if (estadoParam === 'pendiente') {
+            setStatusFilter('pendiente');
+            return;
+        }
+
+        setStatusFilter('todos');
+    }, [searchParams]);
 
     useEffect(() => {
         async function fetchClients() {
@@ -29,10 +49,36 @@ export default function ClientsPage() {
         fetchClients();
     }, []);
 
-    const filteredClients = clients.filter((c: any) =>
-        `${c.nombre} ${c.apellidos}`.toLowerCase().includes(search.toLowerCase()) ||
-        c.codigo_cliente?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredClients = clients.filter((c: any) => {
+        const matchesSearch =
+            `${c.nombre} ${c.apellidos}`.toLowerCase().includes(search.toLowerCase()) ||
+            c.codigo_cliente?.toLowerCase().includes(search.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        if (statusFilter === 'pagado') {
+            return !c.has_pending;
+        }
+
+        if (statusFilter === 'pendiente') {
+            return c.has_pending;
+        }
+
+        return true;
+    }).sort((a: any, b: any) => {
+        if (statusFilter === 'pagado') {
+            // In paid view, prioritize clients with paid invoices and newest paid invoice first.
+            const aHasPaid = a.has_paid_invoice ? 1 : 0;
+            const bHasPaid = b.has_paid_invoice ? 1 : 0;
+            if (aHasPaid !== bHasPaid) return bHasPaid - aHasPaid;
+
+            const aDate = a.last_paid_invoice_date ? new Date(a.last_paid_invoice_date).getTime() : 0;
+            const bDate = b.last_paid_invoice_date ? new Date(b.last_paid_invoice_date).getTime() : 0;
+            if (aDate !== bDate) return bDate - aDate;
+        }
+
+        return `${a.nombre} ${a.apellidos}`.localeCompare(`${b.nombre} ${b.apellidos}`, 'es', { sensitivity: 'base' });
+    });
 
     return (
         <div className="flex flex-col gap-6 pb-20">
@@ -55,6 +101,26 @@ export default function ClientsPage() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
+                </div>
+                <div className="glass p-1 rounded-2xl grid grid-cols-3 gap-1 w-full">
+                    <button
+                        onClick={() => setStatusFilter('todos')}
+                        className={`text-[10px] py-2 rounded-xl uppercase tracking-widest font-black transition-all ${statusFilter === 'todos' ? 'bg-gold text-black' : 'text-gray-400'}`}
+                    >
+                        Todos
+                    </button>
+                    <button
+                        onClick={() => setStatusFilter('pagado')}
+                        className={`text-[10px] py-2 rounded-xl uppercase tracking-widest font-black transition-all ${statusFilter === 'pagado' ? 'bg-emerald-400 text-black' : 'text-gray-400'}`}
+                    >
+                        Pagados
+                    </button>
+                    <button
+                        onClick={() => setStatusFilter('pendiente')}
+                        className={`text-[10px] py-2 rounded-xl uppercase tracking-widest font-black transition-all ${statusFilter === 'pendiente' ? 'bg-red-400 text-black' : 'text-gray-400'}`}
+                    >
+                        Pendientes
+                    </button>
                 </div>
             </header>
 

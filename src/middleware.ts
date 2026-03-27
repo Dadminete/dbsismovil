@@ -4,6 +4,15 @@ import type { NextRequest } from 'next/server';
 // Routes that don't require authentication
 const publicRoutes = ['/login', '/api/auth/login', '/api/auth/biometric'];
 
+function isTecnicoSession(sessionData: any) {
+    const role = String(sessionData?.rol || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
+    return Boolean(sessionData?.isTecnico) || role.includes('tecnico');
+}
+
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
@@ -33,6 +42,36 @@ export function middleware(request: NextRequest) {
         // Redirect to login if no session
         const loginUrl = new URL('/login', request.url);
         return NextResponse.redirect(loginUrl);
+    }
+
+    try {
+        const sessionData = JSON.parse(session.value);
+
+        if (isTecnicoSession(sessionData)) {
+            const isAllowedTecnicoPath =
+                pathname.startsWith('/clients') ||
+                pathname.startsWith('/api/clients') ||
+                (pathname.startsWith('/api/invoices') && request.method === 'GET') ||
+                (pathname.startsWith('/api/payments') && request.method === 'GET') ||
+                pathname.startsWith('/api/uploads') ||
+                pathname.startsWith('/api/auth/logout') ||
+                pathname.startsWith('/uploads') ||
+                pathname.startsWith('/manifest') ||
+                pathname.startsWith('/logo') ||
+                pathname.startsWith('/favicon');
+
+            if (pathname === '/') {
+                const clientsPaidUrl = new URL('/clients?estado=pagado', request.url);
+                return NextResponse.redirect(clientsPaidUrl);
+            }
+
+            if (!isAllowedTecnicoPath) {
+                const clientsPaidUrl = new URL('/clients?estado=pagado', request.url);
+                return NextResponse.redirect(clientsPaidUrl);
+            }
+        }
+    } catch {
+        // Ignore malformed session and continue with default behavior.
     }
 
     return NextResponse.next();

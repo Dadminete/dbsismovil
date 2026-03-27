@@ -15,7 +15,16 @@ export async function GET() {
         EXISTS (
           SELECT 1 FROM facturas_clientes f 
           WHERE f.cliente_id = c.id AND f.estado IN ('pendiente', 'parcial')
-        ) as has_pending
+        ) as has_pending,
+        EXISTS (
+          SELECT 1 FROM facturas_clientes f
+          WHERE f.cliente_id = c.id AND f.estado = 'pagada'
+        ) as has_paid_invoice,
+        (
+          SELECT MAX(f.fecha_factura)
+          FROM facturas_clientes f
+          WHERE f.cliente_id = c.id AND f.estado = 'pagada'
+        ) as last_paid_invoice_date
       FROM clientes c
       WHERE LOWER(c.estado) = 'activo'
         AND EXISTS (SELECT 1 FROM suscripciones s WHERE s.cliente_id = c.id AND s.estado = 'activo')

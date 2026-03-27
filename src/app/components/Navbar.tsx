@@ -2,24 +2,55 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, Users, Settings, DollarSign, PieChart } from 'lucide-react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Home, Users, Settings, DollarSign, PieChart, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import TransactionModal from './TransactionModal';
 
-export default function Navbar() {
+interface NavbarProps {
+    isTecnico?: boolean;
+}
+
+export default function Navbar({ isTecnico = false }: NavbarProps) {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
     if (pathname === '/login') return null;
 
-    const links = [
-        { href: '/', icon: Home, label: 'Dashboard' },
-        { href: '/clients', icon: Users, label: 'Clientes' },
-        { href: '/settings', icon: Settings, label: 'Ajustes' },
-    ];
+    if (isTecnico) {
+        const estado = searchParams.get('estado')?.toLowerCase();
+        const isClientesActive = pathname === '/clients' && estado !== 'pagado';
+        const isPagadosActive = pathname === '/clients' && estado === 'pagado';
+
+        return (
+            <nav className="fixed bottom-0 left-0 right-0 h-20 glass border-t border-border-glass z-50 px-6 pb-4 pt-2">
+                <div className="flex justify-center items-center h-full max-w-lg mx-auto gap-16">
+                    <Link href="/clients" className="relative flex flex-col items-center gap-1 group">
+                        <div className={`p-2 rounded-xl transition-all duration-300 ${isClientesActive ? 'text-gold' : 'text-gray-400'}`}>
+                            <Users size={24} />
+                            {isClientesActive && (
+                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
+                            )}
+                        </div>
+                        <span className={`text-[10px] uppercase tracking-widest font-bold ${isClientesActive ? 'text-gold' : 'text-gray-500'}`}>Clientes</span>
+                    </Link>
+
+                    <Link href="/clients?estado=pagado" className="relative flex flex-col items-center gap-1 group">
+                        <div className={`p-2 rounded-xl transition-all duration-300 ${isPagadosActive ? 'text-gold' : 'text-gray-400'}`}>
+                            <BadgeCheck size={24} />
+                            {isPagadosActive && (
+                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
+                            )}
+                        </div>
+                        <span className={`text-[10px] uppercase tracking-widest font-bold ${isPagadosActive ? 'text-gold' : 'text-gray-500'}`}>Pagados</span>
+                    </Link>
+                </div>
+            </nav>
+        );
+    }
 
     return (
         <>
