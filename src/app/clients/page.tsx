@@ -18,6 +18,19 @@ export default function ClientsPage() {
     const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
     const [statusFilter, setStatusFilter] = useState<ClientStatusFilter>('todos');
 
+    const changeStatusFilter = (nextFilter: ClientStatusFilter) => {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (nextFilter === 'todos') {
+            params.delete('estado');
+        } else {
+            params.set('estado', nextFilter);
+        }
+
+        const query = params.toString();
+        router.push(query ? `/clients?${query}` : '/clients');
+    };
+
     useEffect(() => {
         const estadoParam = searchParams.get('estado')?.toLowerCase();
 
@@ -37,17 +50,24 @@ export default function ClientsPage() {
     useEffect(() => {
         async function fetchClients() {
             try {
-                const res = await fetch('/api/clients');
+                const estadoParam = statusFilter !== 'todos' ? `?estado=${statusFilter}` : '';
+                const res = await fetch(`/api/clients${estadoParam}`);
                 const data = await res.json();
-                setClients(data);
+                if (res.ok && Array.isArray(data)) {
+                    setClients(data);
+                } else {
+                    console.error('Invalid response from API:', data);
+                    setClients([]);
+                }
             } catch (error) {
                 console.error('Error fetching clients:', error);
+                setClients([]);
             } finally {
                 setLoading(false);
             }
         }
         fetchClients();
-    }, []);
+    }, [statusFilter]);
 
     const filteredClients = clients.filter((c: any) => {
         const matchesSearch =
@@ -56,28 +76,7 @@ export default function ClientsPage() {
 
         if (!matchesSearch) return false;
 
-        if (statusFilter === 'pagado') {
-            return !c.has_pending;
-        }
-
-        if (statusFilter === 'pendiente') {
-            return c.has_pending;
-        }
-
         return true;
-    }).sort((a: any, b: any) => {
-        if (statusFilter === 'pagado') {
-            // In paid view, prioritize clients with paid invoices and newest paid invoice first.
-            const aHasPaid = a.has_paid_invoice ? 1 : 0;
-            const bHasPaid = b.has_paid_invoice ? 1 : 0;
-            if (aHasPaid !== bHasPaid) return bHasPaid - aHasPaid;
-
-            const aDate = a.last_paid_invoice_date ? new Date(a.last_paid_invoice_date).getTime() : 0;
-            const bDate = b.last_paid_invoice_date ? new Date(b.last_paid_invoice_date).getTime() : 0;
-            if (aDate !== bDate) return bDate - aDate;
-        }
-
-        return `${a.nombre} ${a.apellidos}`.localeCompare(`${b.nombre} ${b.apellidos}`, 'es', { sensitivity: 'base' });
     });
 
     return (
@@ -104,19 +103,19 @@ export default function ClientsPage() {
                 </div>
                 <div className="glass p-1 rounded-2xl grid grid-cols-3 gap-1 w-full">
                     <button
-                        onClick={() => setStatusFilter('todos')}
+                        onClick={() => changeStatusFilter('todos')}
                         className={`text-[10px] py-2 rounded-xl uppercase tracking-widest font-black transition-all ${statusFilter === 'todos' ? 'bg-gold text-black' : 'text-gray-400'}`}
                     >
                         Todos
                     </button>
                     <button
-                        onClick={() => setStatusFilter('pagado')}
+                        onClick={() => changeStatusFilter('pagado')}
                         className={`text-[10px] py-2 rounded-xl uppercase tracking-widest font-black transition-all ${statusFilter === 'pagado' ? 'bg-emerald-400 text-black' : 'text-gray-400'}`}
                     >
                         Pagados
                     </button>
                     <button
-                        onClick={() => setStatusFilter('pendiente')}
+                        onClick={() => changeStatusFilter('pendiente')}
                         className={`text-[10px] py-2 rounded-xl uppercase tracking-widest font-black transition-all ${statusFilter === 'pendiente' ? 'bg-red-400 text-black' : 'text-gray-400'}`}
                     >
                         Pendientes

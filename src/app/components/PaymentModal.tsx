@@ -42,8 +42,9 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
         fetchData();
     }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const [showConfirmation, setShowConfirmation] = useState(false);
+
+    const processPayment = async () => {
         setLoading(true);
         setError('');
 
@@ -66,12 +67,15 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
             const data = await res.json();
             if (res.ok) {
                 setSuccess(true);
+                setShowConfirmation(false);
                 onSuccess(data.nuovo_estado);
             } else {
                 setError(data.error || 'Error al procesar el pago');
+                setShowConfirmation(false);
             }
         } catch (err) {
             setError('Error de conexión');
+            setShowConfirmation(false);
         } finally {
             setLoading(false);
         }
@@ -142,7 +146,8 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                         </div>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                    <>
+                    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
                         <div className="flex flex-col gap-2">
                             <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Monto a Pagar</label>
                             <div className="relative">
@@ -259,19 +264,52 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                         </AnimatePresence>
 
                         <button
-                            type="submit"
+                            type="button"
                             disabled={loading}
+                            onClick={() => setShowConfirmation(true)}
                             className="mt-4 gold-gradient p-5 rounded-3xl text-black font-black uppercase text-sm tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50"
                         >
-                            {loading ? (
-                                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-black"></div>
-                            ) : (
-                                <>
-                                    <CheckCircle2 size={20} /> Completar Pago
-                                </>
-                            )}
+                            <CheckCircle2 size={20} /> Completar Pago
                         </button>
                     </form>
+
+                    {showConfirmation && (
+                        <div className="absolute inset-0 bg-black/90 backdrop-blur-md rounded-[40px] flex flex-col items-center justify-center gap-6 p-8 z-10">
+                            <div className="text-center">
+                                <p className="text-[10px] text-gold font-black uppercase tracking-widest italic">¿Confirmar Pago?</p>
+                                <h3 className="text-3xl font-black mt-2 text-white">
+                                    RD${parseFloat(String(amount)).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+                                </h3>
+                                <p className="text-xs text-gray-400 font-bold mt-2 uppercase tracking-widest">Factura #{invoice.numero_factura}</p>
+                                <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-widest">
+                                    {method === 'efectivo' ? 'Efectivo / Caja' : 'Banco / Transferencia'}
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-3 w-full">
+                                <button
+                                    type="button"
+                                    onClick={processPayment}
+                                    disabled={loading}
+                                    className="gold-gradient p-5 rounded-3xl text-black font-black uppercase text-sm tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50"
+                                >
+                                    {loading ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-black"></div>
+                                    ) : (
+                                        <><CheckCircle2 size={20} /> Sí, Confirmar Pago</>
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmation(false)}
+                                    disabled={loading}
+                                    className="glass p-4 rounded-3xl text-gray-300 font-black uppercase text-sm tracking-widest active:scale-95 transition-all border border-white/10"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    </>
                 )}
             </motion.div>
         </div>

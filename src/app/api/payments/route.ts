@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
+import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
     try {
@@ -61,6 +62,40 @@ export async function POST(request: Request) {
         // 6. Update Caja balance if applicable
         if (metodo_pago === 'efectivo' && caja_id) {
             await query('UPDATE cajas SET saldo_actual = saldo_actual + $1 WHERE id = $2', [monto, caja_id]);
+        }
+
+        // 7. Log to bitacora
+        try {
+            let logUserId: string | null = null;
+            const cookieStore = await cookies();
+            const session = cookieStore.get('session');
+            if (session) {
+                const sessionData = JSON.parse(session.value);
+                logUserId = sessionData.userId || null;
+            }
+            const ipRaw = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+                || request.headers.get('x-real-ip')
+                || null;
+            await query(
+                `INSERT INTO bitacora (
+                    usuario_id, accion, tabla_afectada, registro_afectado_id,
+                    detalles_nuevos, ip_address, user_agent, metodo, ruta, resultado
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [
+                    logUserId,
+                    'REGISTRAR_PAGO',
+                    'pagos_clientes',
+                    paymentId,
+                    JSON.stringify({ factura_id, cliente_id, monto, metodo_pago, estado_factura: newStatus }),
+                    ipRaw,
+                    request.headers.get('user-agent') || null,
+                    'POST',
+                    '/api/payments',
+                    'exitoso'
+                ]
+            );
+        } catch (logErr) {
+            console.error('Bitacora error:', logErr);
         }
 
         return NextResponse.json({ success: true, payment_id: paymentId, nuovo_estado: newStatus });

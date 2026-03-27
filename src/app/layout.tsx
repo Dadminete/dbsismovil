@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { query } from "@/lib/db";
 import { redirect } from "next/navigation";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "ETE Movil",
@@ -71,7 +71,16 @@ export default async function RootLayout({
         isTecnico = true;
       } else if (sessionData.userId) {
         const tecnicoRes = await query(
-          `SELECT (
+          `SELECT
+            (SELECT r.nombre_rol
+             FROM usuarios_roles ur
+             JOIN roles r ON r.id = ur.rol_id
+             WHERE ur.usuario_id = $1
+               AND ur.activo = true
+               AND r.activo = true
+             ORDER BY r.prioridad DESC, ur.fecha_asignacion DESC
+             LIMIT 1) AS nombre_rol,
+            (
               EXISTS (
                 SELECT 1
                 FROM usuarios_roles ur
@@ -79,7 +88,7 @@ export default async function RootLayout({
                 WHERE ur.usuario_id = $1
                   AND ur.activo = true
                   AND r.activo = true
-                  AND lower(r.nombre_rol) LIKE '%tecnico%'
+                  AND lower(translate(r.nombre_rol, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
               )
               OR EXISTS (
                 SELECT 1
@@ -88,13 +97,15 @@ export default async function RootLayout({
                 WHERE up.usuario_id = $1
                   AND up.activo = true
                   AND p.activo = true
-                  AND lower(p.nombre_permiso) LIKE '%tecnico%'
+                  AND lower(translate(p.nombre_permiso, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
               )
             ) AS is_tecnico`,
           [sessionData.userId]
         );
 
-        isTecnico = Boolean(tecnicoRes.rows[0]?.is_tecnico);
+        const roleFromDb = String(tecnicoRes.rows[0]?.nombre_rol || '');
+        isTecnico = Boolean(tecnicoRes.rows[0]?.is_tecnico) ||
+          roleFromDb.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('tecnico');
       }
     } catch (e) {
       // Ignore json parse errors

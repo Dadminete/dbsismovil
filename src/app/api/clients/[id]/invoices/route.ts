@@ -11,9 +11,8 @@ export async function GET(
             `SELECT *
              FROM facturas_clientes
              WHERE cliente_id = $1
-             ORDER BY
-                CASE WHEN LOWER(estado) = 'pagada' THEN 0 ELSE 1 END,
-                fecha_factura DESC`,
+               AND LOWER(estado) IN ('pendiente', 'parcial', 'adelantado', 'pagado', 'pagada')
+             ORDER BY updated_at DESC NULLS LAST`,
             [id]
         );
         return NextResponse.json(res.rows);

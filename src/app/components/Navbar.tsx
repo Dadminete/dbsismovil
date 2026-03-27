@@ -25,9 +25,11 @@ export default function Navbar({ isTecnico = false }: NavbarProps) {
         const isClientesActive = pathname === '/clients' && estado !== 'pagado';
         const isPagadosActive = pathname === '/clients' && estado === 'pagado';
 
+        const isSettingsActive = pathname === '/settings';
+
         return (
             <nav className="fixed bottom-0 left-0 right-0 h-20 glass border-t border-border-glass z-50 px-6 pb-4 pt-2">
-                <div className="flex justify-center items-center h-full max-w-lg mx-auto gap-16">
+                <div className="flex justify-around items-center h-full max-w-lg mx-auto">
                     <Link href="/clients" className="relative flex flex-col items-center gap-1 group">
                         <div className={`p-2 rounded-xl transition-all duration-300 ${isClientesActive ? 'text-gold' : 'text-gray-400'}`}>
                             <Users size={24} />
@@ -46,6 +48,16 @@ export default function Navbar({ isTecnico = false }: NavbarProps) {
                             )}
                         </div>
                         <span className={`text-[10px] uppercase tracking-widest font-bold ${isPagadosActive ? 'text-gold' : 'text-gray-500'}`}>Pagados</span>
+                    </Link>
+
+                    <Link href="/settings" className="relative flex flex-col items-center gap-1 group">
+                        <div className={`p-2 rounded-xl transition-all duration-300 ${isSettingsActive ? 'text-gold' : 'text-gray-400'}`}>
+                            <Settings size={24} />
+                            {isSettingsActive && (
+                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
+                            )}
+                        </div>
+                        <span className={`text-[10px] uppercase tracking-widest font-bold ${isSettingsActive ? 'text-gold' : 'text-gray-500'}`}>Ajustes</span>
                     </Link>
                 </div>
             </nav>

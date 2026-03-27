@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LogOut, Shield, Bell, Moon, Sun, Smartphone, ChevronLeft, Fingerprint, Check, Download } from 'lucide-react';
+import { LogOut, Shield, Bell, Moon, Sun, Smartphone, ChevronLeft, Fingerprint, Check, Download, UserCircle } from 'lucide-react';
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -16,6 +16,7 @@ export default function SettingsPage() {
     const [isAppInstalled, setIsAppInstalled] = useState(false);
     const [showPWAModal, setShowPWAModal] = useState(false);
     const [pwaInstructions, setPwaInstructions] = useState({ title: '', steps: [''] });
+    const [currentUser, setCurrentUser] = useState<{ nombre: string; rol: string; avatar?: string } | null>(null);
 
     useEffect(() => {
         // Load saved preferences
@@ -40,6 +41,21 @@ export default function SettingsPage() {
         }
 
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    }, []);
+
+    useEffect(() => {
+        async function fetchCurrentUser() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    setCurrentUser(data);
+                }
+            } catch {
+                // Ignore
+            }
+        }
+        fetchCurrentUser();
     }, []);
 
     const toast = (message: string) => {
@@ -278,12 +294,20 @@ export default function SettingsPage() {
             </header>
 
             <section className="glass rounded-[40px] p-6 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-3xl overflow-hidden border border-gold/20 shadow-lg relative">
-                    <Image src="/logo.jpg" alt="Logo" fill sizes="64px" className="object-cover" />
+                <div className="w-16 h-16 rounded-3xl overflow-hidden border border-gold/20 shadow-lg relative flex items-center justify-center bg-gold/10">
+                    {currentUser?.avatar ? (
+                        <Image src={currentUser.avatar} alt="Avatar" fill sizes="64px" className="object-cover" />
+                    ) : (
+                        <UserCircle size={36} className="text-gold" />
+                    )}
                 </div>
-                <div>
-                    <h2 className="font-black italic text-lg gold-text-gradient">Admin User</h2>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase italic">Empresa Tecnológica del Este</p>
+                <div className="flex flex-col gap-1">
+                    <h2 className="font-black italic text-lg gold-text-gradient">
+                        {currentUser?.nombre ?? '...'}
+                    </h2>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20 w-fit">
+                        {currentUser?.rol ?? '...'}
+                    </span>
                 </div>
             </section>
 

@@ -29,7 +29,7 @@ export async function POST() {
                         WHERE ur.usuario_id = u.id
                             AND ur.activo = true
                             AND r.activo = true
-                            AND lower(r.nombre_rol) LIKE '%tecnico%'
+                            AND lower(translate(r.nombre_rol, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
                     )
                     OR EXISTS (
                         SELECT 1
@@ -38,7 +38,7 @@ export async function POST() {
                         WHERE up.usuario_id = u.id
                             AND up.activo = true
                             AND p.activo = true
-                            AND lower(p.nombre_permiso) LIKE '%tecnico%'
+                            AND lower(translate(p.nombre_permiso, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
                     )
                 ) as is_tecnico
             FROM usuarios u

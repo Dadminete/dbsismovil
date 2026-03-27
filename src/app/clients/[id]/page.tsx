@@ -354,6 +354,14 @@ export default function ClientDetailsPage() {
                                 transition={{ delay: index * 0.1 }}
                                 className="glass rounded-3xl p-5 flex flex-col gap-4 relative overflow-hidden"
                             >
+                                {(() => {
+                                    const invoiceStatus = String(invoice.estado || '').toLowerCase();
+                                    const isPaidInvoice = invoiceStatus === 'pagada' || invoiceStatus === 'pagado';
+                                    const isAdvancedInvoice = invoiceStatus === 'adelantado';
+                                    const isPartialInvoice = invoiceStatus === 'parcial';
+
+                                    return (
+                                        <>
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="text-[10px] text-gray-500 font-black uppercase tracking-tighter">#{invoice.numero_factura}</p>
@@ -361,11 +369,13 @@ export default function ClientDetailsPage() {
                                             {mounted ? `$${parseFloat(invoice.total).toLocaleString()}` : '---'}
                                         </h4>
                                     </div>
-                                    <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase italic border ${invoice.estado === 'pagada'
+                                    <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase italic border ${isPaidInvoice
                                         ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                                        : invoice.estado === 'parcial'
-                                            ? 'bg-gold/10 text-gold border-gold/20'
-                                            : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
+                                        : isAdvancedInvoice
+                                            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                                            : isPartialInvoice
+                                                ? 'bg-gold/10 text-gold border-gold/20'
+                                                : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
                                         }`}>
                                         {invoice.estado}
                                     </div>
@@ -379,7 +389,7 @@ export default function ClientDetailsPage() {
                                         </span>
                                     </div>
 
-                                    {invoice.estado !== 'pagada' ? (
+                                    {!isPaidInvoice && !isAdvancedInvoice ? (
                                         <button
                                             onClick={() => openPaymentModal(invoice)}
                                             className="bg-gold/10 hover:bg-gold text-gold hover:text-black border border-gold/30 p-2 px-4 rounded-xl text-[10px] font-black uppercase transition-all duration-300 flex items-center gap-2"
@@ -394,7 +404,7 @@ export default function ClientDetailsPage() {
                                             <Printer size={12} /> Imprimir
                                         </button>
                                     )}
-                                    {invoice.estado !== 'pagada' && (
+                                    {!isPaidInvoice && !isAdvancedInvoice && (
                                         <button
                                             onClick={() => handlePrint(invoice)}
                                             className="bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 p-2 px-3 rounded-xl transition-all active:scale-95"
@@ -403,6 +413,9 @@ export default function ClientDetailsPage() {
                                         </button>
                                     )}
                                 </div>
+                                        </>
+                                    );
+                                })()}
                             </motion.div>
                         ))
                     )}

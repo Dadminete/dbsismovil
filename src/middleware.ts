@@ -50,11 +50,15 @@ export function middleware(request: NextRequest) {
         if (isTecnicoSession(sessionData)) {
             const isAllowedTecnicoPath =
                 pathname.startsWith('/clients') ||
+                pathname.startsWith('/settings') ||
                 pathname.startsWith('/api/clients') ||
                 (pathname.startsWith('/api/invoices') && request.method === 'GET') ||
-                (pathname.startsWith('/api/payments') && request.method === 'GET') ||
+                (pathname.startsWith('/api/payments') && (request.method === 'GET' || request.method === 'POST')) ||
+                (pathname.startsWith('/api/cajas') && request.method === 'GET') ||
+                (pathname.startsWith('/api/banks') && request.method === 'GET') ||
                 pathname.startsWith('/api/uploads') ||
                 pathname.startsWith('/api/auth/logout') ||
+                pathname.startsWith('/api/auth/me') ||
                 pathname.startsWith('/uploads') ||
                 pathname.startsWith('/manifest') ||
                 pathname.startsWith('/logo') ||

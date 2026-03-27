@@ -116,7 +116,7 @@ export default async function Dashboard() {
                 WHERE ur.usuario_id = $1
                   AND ur.activo = true
                   AND r.activo = true
-                  AND lower(r.nombre_rol) LIKE '%tecnico%'
+                  AND lower(translate(r.nombre_rol, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
               )
               OR EXISTS (
                 SELECT 1
@@ -125,7 +125,7 @@ export default async function Dashboard() {
                 WHERE up.usuario_id = $1
                   AND up.activo = true
                   AND p.activo = true
-                  AND lower(p.nombre_permiso) LIKE '%tecnico%'
+                  AND lower(translate(p.nombre_permiso, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
               )
             ) AS is_tecnico`,
           [sessionData.userId]
