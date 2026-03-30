@@ -11,7 +11,8 @@ interface PaymentModalProps {
 }
 
 export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
-    const [amount, setAmount] = useState(invoice.total);
+    const initialAmount = String(invoice.monto_pendiente ?? invoice.total ?? '0');
+    const [amount, setAmount] = useState(initialAmount);
     const [method, setMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
     const [banks, setBanks] = useState<any[]>([]);
     const [cajas, setCajas] = useState<any[]>([]);
@@ -34,7 +35,16 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                 const cajasData = await cajasRes.json();
                 setBanks(banksData);
                 setCajas(cajasData);
-                if (cajasData.length > 0) setSelectedCaja(cajasData[0].id);
+                if (Array.isArray(cajasData) && cajasData.length > 0) {
+                    const cajaPrincipalExacta = cajasData.find(
+                        (c: any) => String(c?.nombre || '').trim().toLowerCase() === 'caja principal'
+                    );
+                    const cajaPrincipalAproximada = cajasData.find(
+                        (c: any) => String(c?.nombre || '').toLowerCase().includes('principal')
+                    );
+                    const cajaPorDefecto = cajaPrincipalExacta || cajaPrincipalAproximada || cajasData[0];
+                    setSelectedCaja(cajaPorDefecto.id);
+                }
             } catch (err) {
                 console.error('Error fetching data:', err);
             }

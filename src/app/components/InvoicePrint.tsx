@@ -13,6 +13,8 @@ const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(({ invo
 
     const totalPaid = payments.reduce((acc, p) => acc + parseFloat(p.monto), 0);
     const balance = parseFloat(invoice.total) - totalPaid;
+    const latestPayment = payments[0];
+    const printedBy = latestPayment?.cobrador_nombre_completo || latestPayment?.cobrador_username || 'Usuario del sistema';
 
     return (
         <div className="print-only">
@@ -137,7 +139,7 @@ const InvoicePrint = React.forwardRef<HTMLDivElement, InvoicePrintProps>(({ invo
 
                 <div className="text-center mt-2" style={{ fontSize: '8px' }}>
                     <div className="divider"></div>
-                    <div>Impreso por: Daniel Beras Sanchez</div>
+                    <div>Impreso por: {printedBy}</div>
                     <div className="bold mt-2">*** ¡Gracias por su pago! ***</div>
                     <div style={{ marginTop: '2mm' }}>{new Date().toLocaleString()}</div>
                 </div>

@@ -358,7 +358,9 @@ export default function ClientDetailsPage() {
                                     const invoiceStatus = String(invoice.estado || '').toLowerCase();
                                     const isPaidInvoice = invoiceStatus === 'pagada' || invoiceStatus === 'pagado';
                                     const isAdvancedInvoice = invoiceStatus === 'adelantado';
-                                    const isPartialInvoice = invoiceStatus === 'parcial';
+                                    const isPartialInvoice = invoiceStatus === 'parcial' || invoiceStatus === 'pago parcial';
+                                    const pendingAmount = Number(invoice.monto_pendiente ?? invoice.total ?? 0);
+                                    const displayAmount = isPartialInvoice ? pendingAmount : Number(invoice.total ?? 0);
 
                                     return (
                                         <>
@@ -366,7 +368,7 @@ export default function ClientDetailsPage() {
                                     <div>
                                         <p className="text-[10px] text-gray-500 font-black uppercase tracking-tighter">#{invoice.numero_factura}</p>
                                         <h4 className="text-lg font-black italic gold-text-gradient">
-                                            {mounted ? `$${parseFloat(invoice.total).toLocaleString()}` : '---'}
+                                            {mounted ? `$${displayAmount.toLocaleString()}` : '---'}
                                         </h4>
                                     </div>
                                     <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase italic border ${isPaidInvoice

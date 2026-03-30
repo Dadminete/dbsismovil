@@ -17,6 +17,18 @@ export async function POST(request: Request) {
             observaciones
         } = body;
 
+        let sessionUserId: string | null = null;
+        try {
+            const cookieStore = await cookies();
+            const session = cookieStore.get('session');
+            if (session) {
+                const sessionData = JSON.parse(session.value);
+                sessionUserId = sessionData.userId || null;
+            }
+        } catch {
+            sessionUserId = null;
+        }
+
         // 1. Get current invoice balance
         const invoiceRes = await query('SELECT total, estado FROM facturas_clientes WHERE id = $1', [factura_id]);
         if (invoiceRes.rows.length === 0) {
@@ -31,10 +43,13 @@ export async function POST(request: Request) {
         const newTotalPaid = totalPaidBefore + parseFloat(monto);
 
         // 3. Determine new status
-        let newStatus = 'parcial';
+        let newStatus = 'pago parcial';
         if (newTotalPaid >= invoiceTotal) {
             newStatus = 'pagada';
         }
+
+        const newPending = Math.max(invoiceTotal - newTotalPaid, 0);
+        const receivableStatus = newPending <= 0 ? 'pagada' : (newTotalPaid > 0 ? 'parcial' : 'pendiente');
 
         // 4. Create Payment Record
         const paymentId = uuidv4();
@@ -44,12 +59,12 @@ export async function POST(request: Request) {
             `INSERT INTO pagos_clientes (
         id, factura_id, cliente_id, numero_pago, fecha_pago, monto, 
         metodo_pago, caja_id, cuenta_bancaria_id, numero_referencia, 
-        estado, observaciones, moneda, descuento, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+        estado, observaciones, moneda, descuento, recibido_por, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())`,
             [
                 paymentId, factura_id, cliente_id, numeroPago, monto,
                 metodo_pago, caja_id || null, cuenta_bancaria_id || null, numero_referencia || '',
-                'confirmado', observaciones || '', 'DOP', 0
+                'confirmado', observaciones || '', 'DOP', 0, sessionUserId
             ]
         );
 
@@ -59,6 +74,15 @@ export async function POST(request: Request) {
             [newStatus, factura_id]
         );
 
+        await query(
+            `UPDATE cuentas_por_cobrar
+             SET monto_pendiente = $1,
+                 estado = $2,
+                 updated_at = NOW()
+             WHERE factura_id = $3`,
+            [newPending, receivableStatus, factura_id]
+        );
+
         // 6. Update Caja balance if applicable
         if (metodo_pago === 'efectivo' && caja_id) {
             await query('UPDATE cajas SET saldo_actual = saldo_actual + $1 WHERE id = $2', [monto, caja_id]);
@@ -66,13 +90,7 @@ export async function POST(request: Request) {
 
         // 7. Log to bitacora
         try {
-            let logUserId: string | null = null;
-            const cookieStore = await cookies();
-            const session = cookieStore.get('session');
-            if (session) {
-                const sessionData = JSON.parse(session.value);
-                logUserId = sessionData.userId || null;
-            }
+            const logUserId = sessionUserId;
             const ipRaw = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
                 || request.headers.get('x-real-ip')
                 || null;
@@ -111,13 +129,24 @@ export async function GET(request: Request) {
         const factura_id = searchParams.get('factura_id');
         const cliente_id = searchParams.get('cliente_id');
 
+        const baseSelect = `
+            SELECT
+                p.*,
+                u.username AS cobrador_username,
+                u.nombre AS cobrador_nombre,
+                u.apellido AS cobrador_apellido,
+                NULLIF(TRIM(COALESCE(u.nombre, '') || ' ' || COALESCE(u.apellido, '')), '') AS cobrador_nombre_completo
+            FROM pagos_clientes p
+            LEFT JOIN usuarios u ON p.recibido_por = u.id
+        `;
+
         let res;
         if (factura_id) {
-            res = await query('SELECT * FROM pagos_clientes WHERE factura_id = $1 ORDER BY created_at DESC', [factura_id]);
+            res = await query(`${baseSelect} WHERE p.factura_id = $1 ORDER BY p.created_at DESC`, [factura_id]);
         } else if (cliente_id) {
-            res = await query('SELECT * FROM pagos_clientes WHERE cliente_id = $1 ORDER BY created_at DESC', [cliente_id]);
+            res = await query(`${baseSelect} WHERE p.cliente_id = $1 ORDER BY p.created_at DESC`, [cliente_id]);
         } else {
-            res = await query('SELECT * FROM pagos_clientes ORDER BY created_at DESC LIMIT 50');
+            res = await query(`${baseSelect} ORDER BY p.created_at DESC LIMIT 50`);
         }
 
         return NextResponse.json(res.rows);
