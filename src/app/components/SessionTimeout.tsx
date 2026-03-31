@@ -8,9 +8,8 @@ export default function SessionTimeout() {
     const pathname = usePathname();
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     
-    // Timeout in milliseconds (5 minutes = 300,000ms)
-    // Initially setting to 10 seconds for testing as per verification plan
-    const TIMEOUT = 10000; 
+    // Timeout in milliseconds (55 seconds = 55,000ms)
+    const TIMEOUT = 55000; 
 
     const handleLogout = useCallback(async () => {
         try {

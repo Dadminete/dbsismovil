@@ -13,9 +13,11 @@ interface PaymentModalProps {
 export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentModalProps) {
     const initialAmount = String(invoice.monto_pendiente ?? invoice.total ?? '0');
     const [amount, setAmount] = useState(initialAmount);
+    const [discount, setDiscount] = useState('0');
     const [method, setMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
     const [banks, setBanks] = useState<any[]>([]);
     const [cajas, setCajas] = useState<any[]>([]);
+    const [isCajaOpen, setIsCajaOpen] = useState(true);
     const [selectedBank, setSelectedBank] = useState<string>('');
     const [selectedAccount, setSelectedAccount] = useState<string>('');
     const [selectedCaja, setSelectedCaja] = useState<string>('');
@@ -52,6 +54,29 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
         fetchData();
     }, []);
 
+    useEffect(() => {
+        if (method === 'efectivo' && selectedCaja) {
+            async function checkSession() {
+                try {
+                    const res = await fetch(`/api/cajas/sesiones?cajaId=${selectedCaja}`);
+                    const data = await res.json();
+                    setIsCajaOpen(data.isOpen);
+                    if (!data.isOpen) {
+                        setError('La caja seleccionada está cerrada. Abra la caja antes de recibir pagos.');
+                    } else {
+                        setError('');
+                    }
+                } catch (err) {
+                    console.error('Error checking session:', err);
+                }
+            }
+            checkSession();
+        } else {
+            setIsCajaOpen(true);
+            setError('');
+        }
+    }, [method, selectedCaja]);
+
     const [showConfirmation, setShowConfirmation] = useState(false);
 
     const processPayment = async () => {
@@ -66,6 +91,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                     factura_id: invoice.id,
                     cliente_id: invoice.cliente_id,
                     monto: amount,
+                    descuento: discount,
                     metodo_pago: method,
                     caja_id: method === 'efectivo' ? selectedCaja : null,
                     cuenta_bancaria_id: method === 'transferencia' ? selectedAccount : null,
@@ -158,18 +184,33 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                 ) : (
                     <>
                     <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-5">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Monto a Pagar</label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold font-black">$</span>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    className="w-full glass p-4 pl-10 rounded-2xl text-xl font-black outline-none focus:border-gold transition-all"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    required
-                                />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Monto</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gold font-black text-xs">$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full glass py-3 pl-7 pr-3 rounded-2xl text-lg font-black outline-none focus:border-gold transition-all"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Descuento</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-500 font-black text-xs">$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="w-full glass py-3 pl-7 pr-3 rounded-2xl text-lg font-black outline-none focus:border-rose-500/50 transition-all text-rose-500"
+                                        value={discount}
+                                        onChange={(e) => setDiscount(e.target.value)}
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -275,7 +316,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
 
                         <button
                             type="button"
-                            disabled={loading}
+                            disabled={loading || !isCajaOpen}
                             onClick={() => setShowConfirmation(true)}
                             className="mt-4 gold-gradient p-5 rounded-3xl text-black font-black uppercase text-sm tracking-widest active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(212,175,55,0.3)] disabled:opacity-50"
                         >
@@ -288,8 +329,13 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                             <div className="text-center">
                                 <p className="text-[10px] text-gold font-black uppercase tracking-widest italic">¿Confirmar Pago?</p>
                                 <h3 className="text-3xl font-black mt-2 text-white">
-                                    RD${parseFloat(String(amount)).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+                                    RD${(parseFloat(String(amount)) + parseFloat(String(discount))).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
                                 </h3>
+                                {parseFloat(discount) > 0 && (
+                                    <p className="text-[9px] text-rose-500 font-bold uppercase mt-1">
+                                        (Incluye ${parseFloat(discount).toLocaleString()} de descuento)
+                                    </p>
+                                )}
                                 <p className="text-xs text-gray-400 font-bold mt-2 uppercase tracking-widest">Factura #{invoice.numero_factura}</p>
                                 <p className="text-[10px] text-gray-500 font-bold mt-1 uppercase tracking-widest">
                                     {method === 'efectivo' ? 'Efectivo / Caja' : 'Banco / Transferencia'}
