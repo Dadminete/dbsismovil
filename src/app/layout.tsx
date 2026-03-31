@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import SessionTimeout from "./components/SessionTimeout";
 import { cookies } from "next/headers";
 import { query } from "@/lib/db";
 import { redirect } from "next/navigation";
@@ -119,6 +120,7 @@ export default async function RootLayout({
           {children}
         </main>
         <Navbar isTecnico={isTecnico} />
+        <SessionTimeout />
       </body>
     </html>
   );
