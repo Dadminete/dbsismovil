@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, DollarSign, CreditCard, Landmark, CheckCircle2, AlertCircle, ChevronDown, Printer } from 'lucide-react';
+import { useCajaSession } from '@/lib/hooks/useCajaSession';
+import { useFormOptions } from '@/lib/hooks/useFormOptions';
+import { apiClient } from '@/lib/api-client';
 
 interface PaymentModalProps {
     invoice: any;
@@ -15,9 +18,6 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
     const [amount, setAmount] = useState(initialAmount);
     const [discount, setDiscount] = useState('0');
     const [method, setMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
-    const [banks, setBanks] = useState<any[]>([]);
-    const [cajas, setCajas] = useState<any[]>([]);
-    const [isCajaOpen, setIsCajaOpen] = useState(true);
     const [selectedBank, setSelectedBank] = useState<string>('');
     const [selectedAccount, setSelectedAccount] = useState<string>('');
     const [selectedCaja, setSelectedCaja] = useState<string>('');
@@ -26,56 +26,36 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
+    // Use form options hook for banks and cajas
+    const { options: formOptions } = useFormOptions();
+
+    // Initialize default caja
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const [banksRes, cajasRes] = await Promise.all([
-                    fetch('/api/banks'),
-                    fetch('/api/cajas')
-                ]);
-                const banksData = await banksRes.json();
-                const cajasData = await cajasRes.json();
-                setBanks(banksData);
-                setCajas(cajasData);
-                if (Array.isArray(cajasData) && cajasData.length > 0) {
-                    const cajaPrincipalExacta = cajasData.find(
-                        (c: any) => String(c?.nombre || '').trim().toLowerCase() === 'caja principal'
-                    );
-                    const cajaPrincipalAproximada = cajasData.find(
-                        (c: any) => String(c?.nombre || '').toLowerCase().includes('principal')
-                    );
-                    const cajaPorDefecto = cajaPrincipalExacta || cajaPrincipalAproximada || cajasData[0];
-                    setSelectedCaja(cajaPorDefecto.id);
-                }
-            } catch (err) {
-                console.error('Error fetching data:', err);
-            }
+        if (Array.isArray(formOptions.cajas) && formOptions.cajas.length > 0 && !selectedCaja) {
+            const cajaPrincipalExacta = formOptions.cajas.find(
+                (c: any) => String(c?.nombre || '').trim().toLowerCase() === 'caja principal'
+            );
+            const cajaPrincipalAproximada = formOptions.cajas.find(
+                (c: any) => String(c?.nombre || '').toLowerCase().includes('principal')
+            );
+            const cajaPorDefecto = cajaPrincipalExacta || cajaPrincipalAproximada || formOptions.cajas[0];
+            setSelectedCaja(cajaPorDefecto.id);
         }
-        fetchData();
-    }, []);
+    }, [formOptions.cajas, selectedCaja]);
+
+    // Use caja session hook
+    const { isOpen: isCajaOpen, error: cajaError } = useCajaSession(
+        method === 'efectivo' ? selectedCaja : null,
+        method === 'efectivo'
+    );
 
     useEffect(() => {
-        if (method === 'efectivo' && selectedCaja) {
-            async function checkSession() {
-                try {
-                    const res = await fetch(`/api/cajas/sesiones?cajaId=${selectedCaja}`);
-                    const data = await res.json();
-                    setIsCajaOpen(data.isOpen);
-                    if (!data.isOpen) {
-                        setError('La caja seleccionada está cerrada. Abra la caja antes de recibir pagos.');
-                    } else {
-                        setError('');
-                    }
-                } catch (err) {
-                    console.error('Error checking session:', err);
-                }
-            }
-            checkSession();
-        } else {
-            setIsCajaOpen(true);
+        if (cajaError) {
+            setError(cajaError);
+        } else if (method === 'efectivo') {
             setError('');
         }
-    }, [method, selectedCaja]);
+    }, [cajaError, method]);
 
     const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -84,9 +64,8 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
         setError('');
 
         try {
-            const res = await fetch('/api/payments', {
+            const response = await apiClient<{ nuovo_estado?: string }>('/api/payments', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     factura_id: invoice.id,
                     cliente_id: invoice.cliente_id,
@@ -100,13 +79,12 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                 }),
             });
 
-            const data = await res.json();
-            if (res.ok) {
+            if (response.ok) {
                 setSuccess(true);
                 setShowConfirmation(false);
-                onSuccess(data.nuovo_estado);
+                onSuccess(response.data?.nuovo_estado || 'pagada');
             } else {
-                setError(data.error || 'Error al procesar el pago');
+                setError(response.error || 'Error al procesar el pago');
                 setShowConfirmation(false);
             }
         } catch (err) {
@@ -116,8 +94,6 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
             setLoading(false);
         }
     };
-
-    const selectedBankAccounts = banks.find(b => b.id === selectedBank)?.accounts || [];
 
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-4">
@@ -252,7 +228,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                                         onChange={(e) => setSelectedCaja(e.target.value)}
                                         required
                                     >
-                                        {cajas.map(c => (
+                                        {formOptions.cajas.map(c => (
                                             <option key={c.id} value={c.id} className="bg-black text-white">{c.nombre} (Bal: ${parseFloat(c.saldo_actual).toLocaleString()})</option>
                                         ))}
                                     </select>
@@ -277,7 +253,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                                             required
                                         >
                                             <option value="" className="bg-black text-white">Seleccionar Banco</option>
-                                            {banks.map(b => (
+                                            {formOptions.banks.map(b => (
                                                 <option key={b.id} value={b.id} className="bg-black text-white">{b.nombre}</option>
                                             ))}
                                         </select>
@@ -293,7 +269,7 @@ export default function PaymentModal({ invoice, onClose, onSuccess }: PaymentMod
                                                 required
                                             >
                                                 <option value="" className="bg-black text-white">Seleccionar Cuenta</option>
-                                                {selectedBankAccounts.map((acc: any) => (
+                                                {formOptions.banks.find(b => b.id === selectedBank)?.accounts?.map((acc: any) => (
                                                     <option key={acc.id} value={acc.id} className="bg-black text-white">{acc.nombre_oficial_cuenta} - {acc.numero_cuenta} ({acc.moneda})</option>
                                                 ))}
                                             </select>

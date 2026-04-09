@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { isTecnicoRole } from './lib/auth-helpers';
 
 // Routes that don't require authentication
 const publicRoutes = ['/login', '/api/auth/login', '/api/auth/biometric'];
 
 function isTecnicoSession(sessionData: any) {
-    const role = String(sessionData?.rol || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-
-    return Boolean(sessionData?.isTecnico) || role.includes('tecnico');
+    return Boolean(sessionData?.isTecnico) || isTecnicoRole(sessionData?.rol);
 }
 
 export function middleware(request: NextRequest) {

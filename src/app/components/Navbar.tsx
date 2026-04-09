@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Home, Users, Settings, DollarSign, PieChart, BadgeCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import NavItem from './NavItem';
 import TransactionModal from './TransactionModal';
 
 interface NavbarProps {
@@ -20,45 +19,33 @@ export default function Navbar({ isTecnico = false }: NavbarProps) {
 
     if (pathname === '/login') return null;
 
+    const estado = searchParams.get('estado')?.toLowerCase();
+    const isClientesActive = pathname === '/clients' && estado !== 'pagado';
+    const isPagadosActive = pathname === '/clients' && estado === 'pagado';
+    const isSettingsActive = pathname === '/settings';
+
     if (isTecnico) {
-        const estado = searchParams.get('estado')?.toLowerCase();
-        const isClientesActive = pathname === '/clients' && estado !== 'pagado';
-        const isPagadosActive = pathname === '/clients' && estado === 'pagado';
-
-        const isSettingsActive = pathname === '/settings';
-
         return (
             <nav className="fixed bottom-0 left-0 right-0 h-20 glass border-t border-border-glass z-50 px-6 pb-4 pt-2">
                 <div className="flex justify-around items-center h-full max-w-lg mx-auto">
-                    <Link href="/clients" className="relative flex flex-col items-center gap-1 group">
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${isClientesActive ? 'text-gold' : 'text-gray-400'}`}>
-                            <Users size={24} />
-                            {isClientesActive && (
-                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
-                            )}
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${isClientesActive ? 'text-gold' : 'text-gray-500'}`}>Clientes</span>
-                    </Link>
-
-                    <Link href="/clients?estado=pagado" className="relative flex flex-col items-center gap-1 group">
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${isPagadosActive ? 'text-gold' : 'text-gray-400'}`}>
-                            <BadgeCheck size={24} />
-                            {isPagadosActive && (
-                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
-                            )}
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${isPagadosActive ? 'text-gold' : 'text-gray-500'}`}>Pagados</span>
-                    </Link>
-
-                    <Link href="/settings" className="relative flex flex-col items-center gap-1 group">
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${isSettingsActive ? 'text-gold' : 'text-gray-400'}`}>
-                            <Settings size={24} />
-                            {isSettingsActive && (
-                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
-                            )}
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${isSettingsActive ? 'text-gold' : 'text-gray-500'}`}>Ajustes</span>
-                    </Link>
+                    <NavItem
+                        href="/clients"
+                        isActive={isClientesActive}
+                        label="Clientes"
+                        icon={<Users size={24} />}
+                    />
+                    <NavItem
+                        href="/clients?estado=pagado"
+                        isActive={isPagadosActive}
+                        label="Pagados"
+                        icon={<BadgeCheck size={24} />}
+                    />
+                    <NavItem
+                        href="/settings"
+                        isActive={isSettingsActive}
+                        label="Ajustes"
+                        icon={<Settings size={24} />}
+                    />
                 </div>
             </nav>
         );
@@ -68,65 +55,44 @@ export default function Navbar({ isTecnico = false }: NavbarProps) {
         <>
             <nav className="fixed bottom-0 left-0 right-0 h-20 glass border-t border-border-glass z-50 px-6 pb-4 pt-2">
                 <div className="flex justify-around items-center h-full max-w-lg mx-auto">
-                    {/* Dashboard */}
-                    <Link href="/" className="relative flex flex-col items-center gap-1 group">
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${pathname === '/' ? 'text-gold' : 'text-gray-400'}`}>
-                            <Home size={24} />
-                            {pathname === '/' && (
-                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
-                            )}
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === '/' ? 'text-gold' : 'text-gray-500'}`}>Dashboard</span>
-                    </Link>
+                    <NavItem
+                        href="/"
+                        isActive={pathname === '/'}
+                        label="Dashboard"
+                        icon={<Home size={24} />}
+                    />
 
-                    {/* Dollar Button (Quick Action) */}
-                    <button
+                    <NavItem
+                        isActive={isTransactionModalOpen}
+                        label="Operar"
+                        icon={<DollarSign size={24} />}
+                        isButton={true}
                         onClick={() => {
                             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
                             setIsTransactionModalOpen(true);
                         }}
-                        className="relative flex flex-col items-center gap-1 group active:scale-95 transition-all"
-                    >
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${isTransactionModalOpen ? 'text-gold' : 'text-gray-400'}`}>
-                            <DollarSign size={24} />
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${isTransactionModalOpen ? 'text-gold' : 'text-gray-500'}`}>
-                            Operar
-                        </span>
-                    </button>
+                    />
 
-                    {/* Finanzas */}
-                    <Link href="/finance" className="relative flex flex-col items-center gap-1 group">
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${pathname === '/finance' ? 'text-gold' : 'text-gray-400'}`}>
-                            <PieChart size={24} />
-                            {pathname === '/finance' && (
-                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
-                            )}
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === '/finance' ? 'text-gold' : 'text-gray-500'}`}>Finanzas</span>
-                    </Link>
+                    <NavItem
+                        href="/finance"
+                        isActive={pathname === '/finance'}
+                        label="Finanzas"
+                        icon={<PieChart size={24} />}
+                    />
 
-                    {/* Clientes */}
-                    <Link href="/clients" className="relative flex flex-col items-center gap-1 group">
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${pathname === '/clients' ? 'text-gold' : 'text-gray-400'}`}>
-                            <Users size={24} />
-                            {pathname === '/clients' && (
-                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
-                            )}
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === '/clients' ? 'text-gold' : 'text-gray-500'}`}>Clientes</span>
-                    </Link>
+                    <NavItem
+                        href="/clients"
+                        isActive={pathname === '/clients'}
+                        label="Clientes"
+                        icon={<Users size={24} />}
+                    />
 
-                    {/* Ajustes */}
-                    <Link href="/settings" className="relative flex flex-col items-center gap-1 group">
-                        <div className={`p-2 rounded-xl transition-all duration-300 ${pathname === '/settings' ? 'text-gold' : 'text-gray-400'}`}>
-                            <Settings size={24} />
-                            {pathname === '/settings' && (
-                                <motion.div layoutId="nav-glow" className="absolute inset-0 bg-gold/10 blur-xl rounded-full -z-10" />
-                            )}
-                        </div>
-                        <span className={`text-[10px] uppercase tracking-widest font-bold ${pathname === '/settings' ? 'text-gold' : 'text-gray-500'}`}>Ajustes</span>
-                    </Link>
+                    <NavItem
+                        href="/settings"
+                        isActive={pathname === '/settings'}
+                        label="Ajustes"
+                        icon={<Settings size={24} />}
+                    />
                 </div>
             </nav>
 

@@ -1,9 +1,18 @@
 import { Pool } from 'pg';
 
-const rawDatabaseUrl = process.env.DATABASE_URL;
+const rawDatabaseUrl = process.env.LOCAL_DATABASE_URL || process.env.DATABASE_URL;
+
+function isLocalDatabaseUrl(connectionString?: string): boolean {
+    if (!connectionString) return false;
+    return /localhost|127\.0\.0\.1/i.test(connectionString) || /sslmode=disable\b/i.test(connectionString);
+}
 
 function getSafeDatabaseUrl(connectionString?: string): string | undefined {
     if (!connectionString) return undefined;
+
+    if (isLocalDatabaseUrl(connectionString)) {
+        return connectionString;
+    }
 
     const needsExplicitVerifyFull = /sslmode=(prefer|require|verify-ca)\b/i.test(connectionString)
         && !/sslmode=verify-full\b/i.test(connectionString);

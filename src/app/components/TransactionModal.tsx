@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, DollarSign, Wallet, CreditCard, Book, Calendar, FileText, CheckCircle2, ChevronRight } from 'lucide-react';
+import { useFormOptions } from '@/lib/hooks/useFormOptions';
+import { apiClient } from '@/lib/api-client';
 
 interface TransactionModalProps {
     isOpen: boolean;
@@ -12,6 +14,7 @@ interface TransactionModalProps {
 
 export default function TransactionModal({ isOpen, onClose, onSuccess }: TransactionModalProps) {
     const [loading, setLoading] = useState(false);
+    const { options: formOptions } = useFormOptions();
     const [formData, setFormData] = useState({
         tipo: 'ingreso',
         metodo: 'caja',
@@ -24,37 +27,12 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
         fecha: new Date().toISOString().split('T')[0]
     });
 
-    const [formOptions, setFormOptions] = useState<any>({
-        cajas: [],
-        banks: [],
-        accounts: [],
-        categories: [],
-        papeleriaCategories: []
-    });
-
-    useEffect(() => {
-        if (isOpen) {
-            fetchOptions();
-        }
-    }, [isOpen]);
-
-    const fetchOptions = async () => {
-        try {
-            const res = await fetch('/api/finance/form-data');
-            const data = await res.json();
-            setFormOptions(data);
-        } catch (error) {
-            console.error('Error fetching form data:', error);
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            // Combine selected date with current time
             const now = new Date();
-            const timeString = now.toTimeString().split(' ')[0]; // HH:MM:SS
+            const timeString = now.toTimeString().split(' ')[0];
             const dateTime = `${formData.fecha}T${timeString}`;
 
             const payload = {
@@ -62,12 +40,12 @@ export default function TransactionModal({ isOpen, onClose, onSuccess }: Transac
                 fecha: new Date(dateTime).toISOString()
             };
 
-            const res = await fetch('/api/finance/transactions', {
+            const response = await apiClient('/api/finance/transactions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
-            if (res.ok) {
+
+            if (response.ok) {
                 onSuccess?.();
                 onClose();
             }
