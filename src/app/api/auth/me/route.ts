@@ -1,51 +1,38 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { query } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
+import { getSessionData } from '@/lib/auth-helpers';
 
 export async function GET() {
     try {
-        const cookieStore = await cookies();
-        const session = cookieStore.get('session');
+        const sessionData = await getSessionData();
 
-        if (!session) {
-            return NextResponse.json({ error: 'No session' }, { status: 401 });
+        if (!sessionData || !sessionData.userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const sessionData = JSON.parse(session.value);
-        const userId = sessionData.userId;
+        const user = await prisma.usuario.findUnique({
+            where: { id: sessionData.userId },
+            include: {
+                usuariosRoles: {
+                    where: { activo: true },
+                    include: { rol: true },
+                    orderBy: [
+                        { rol: { prioridad: 'desc' } },
+                        { fechaAsignacion: 'desc' }
+                    ]
+                }
+            }
+        });
 
-        if (!userId) {
-            return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-        }
-
-        const res = await query(
-            `SELECT
-                u.nombre,
-                u.avatar,
-                (
-                    SELECT r.nombre_rol
-                    FROM usuarios_roles ur
-                    JOIN roles r ON r.id = ur.rol_id
-                    WHERE ur.usuario_id = u.id
-                      AND ur.activo = true
-                      AND r.activo = true
-                    ORDER BY r.prioridad DESC, ur.fecha_asignacion DESC
-                    LIMIT 1
-                ) AS rol
-             FROM usuarios u
-             WHERE u.id = $1`,
-            [userId]
-        );
-
-        if (res.rows.length === 0) {
+        if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const user = res.rows[0];
+        const roleName = user.usuariosRoles[0]?.rol?.nombreRol || sessionData.rol || 'Sin rol';
 
         return NextResponse.json({
             nombre: user.nombre,
-            rol: user.rol ?? sessionData.rol ?? 'Sin rol',
+            rol: roleName,
             avatar: user.avatar ?? null,
         });
     } catch (error) {

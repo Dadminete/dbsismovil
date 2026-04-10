@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { extractSessionUserId } from '@/lib/auth-helpers';
 
 export async function POST(request: Request) {
@@ -26,51 +26,50 @@ export async function POST(request: Request) {
         console.log('Received transaction body:', body);
         const finalUserId = sessionUserId;
         console.log('Using User ID:', finalUserId);
+        const amountNum = parseFloat(monto);
+        const multiplier = tipo === 'ingreso' ? 1 : -1;
+        const offset = amountNum * multiplier;
 
-        const queryParams = [
-            tipo,
-            monto,
-            categoria_id,
-            metodo,
-            caja_id || null,
-            bank_id || null,
-            cuenta_bancaria_id || null,
-            descripcion,
-            fecha || new Date(),
-            finalUserId,
-            new Date(), // created_at
-            new Date()  // updated_at
-        ];
-        console.log('Query params:', queryParams);
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Insert into movimientos_contables
+            const movimiento = await tx.movimientoContable.create({
+                data: {
+                    tipo,
+                    monto: amountNum,
+                    categoriaId: categoria_id,
+                    metodo,
+                    cajaId: caja_id || null,
+                    bankId: bank_id || null,
+                    cuentaBancariaId: cuenta_bancaria_id || null,
+                    descripcion,
+                    fecha: fecha ? new Date(fecha) : new Date(),
+                    usuarioId: finalUserId
+                }
+            });
 
-        // 1. Insert into movimientos_contables
-        const result = await query(
-            `INSERT INTO movimientos_contables (
-                tipo, monto, categoria_id, metodo, caja_id, bank_id, cuenta_bancaria_id, descripcion, fecha, usuario_id, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-            queryParams
-        );
+            // 2. Update balances
+            if (metodo === 'caja' && caja_id) {
+                await tx.caja.update({
+                    where: { id: caja_id },
+                    data: {
+                        saldoActual: {
+                            increment: offset
+                        }
+                    }
+                });
+            } else if (metodo === 'transferencia' && cuenta_bancaria_id) {
+                await tx.cuentaBancaria.update({
+                    where: { id: cuenta_bancaria_id },
+                    data: {
+                        updatedAt: new Date()
+                    }
+                });
+            }
 
-        // 2. Update balances (simplistic for now, in a real app use triggers or more complex logic)
-        if (metodo === 'caja' && caja_id) {
-            const multiplier = tipo === 'ingreso' ? 1 : -1;
-            const amount = parseFloat(monto);
-            await query(
-                'UPDATE cajas SET saldo_actual = saldo_actual + ($1::numeric * $2::int), updated_at = NOW() WHERE id = $3',
-                [amount, multiplier, caja_id]
-            );
-        } else if (metodo === 'transferencia' && cuenta_bancaria_id) {
-            const multiplier = tipo === 'ingreso' ? 1 : -1;
-            await query(
-                'UPDATE cuentas_bancarias SET updated_at = NOW() WHERE id = $1',
-                [cuenta_bancaria_id]
-            );
-            // Saldo is usually in cuentas_contables or similar. 
-            // The user didn't specify updating balances but it's good practice.
-            // For now, we just log the movement as requested.
-        }
+            return movimiento;
+        });
 
-        return NextResponse.json(result.rows[0]);
+        return NextResponse.json(result);
     } catch (error) {
         console.error('Error saving transaction:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
