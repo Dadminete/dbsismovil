@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { extractSessionUserId } from '@/lib/auth-helpers';
 
 export async function POST(request: Request) {
     try {
+        const sessionUserId = await extractSessionUserId();
+
+        if (!sessionUserId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json();
         const {
             tipo,
@@ -13,12 +20,11 @@ export async function POST(request: Request) {
             bank_id,
             cuenta_bancaria_id,
             descripcion,
-            fecha,
-            usuario_id
+            fecha
         } = body;
 
         console.log('Received transaction body:', body);
-        const finalUserId = usuario_id || 'df4b1335-5ff6-4703-8dcd-3e2f74fb0822';
+        const finalUserId = sessionUserId;
         console.log('Using User ID:', finalUserId);
 
         const queryParams = [
