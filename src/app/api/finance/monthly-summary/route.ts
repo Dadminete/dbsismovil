@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: Request) {
     try {
@@ -24,13 +25,21 @@ export async function GET(request: Request) {
             ORDER BY m.month
         `, [year]);
 
-        return NextResponse.json({
+        return new NextResponse(JSON.stringify({
             year,
             monthly: monthlyData.rows.map((r: any) => ({
                 month: parseInt(r.month),
                 income: parseFloat(r.income),
                 expense: parseFloat(r.expense)
             }))
+        }), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
         });
     } catch (error) {
         console.error('Error fetching monthly summary:', error);

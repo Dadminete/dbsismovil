@@ -54,7 +54,7 @@ export async function GET() {
       FROM pagos_clientes p
       JOIN clientes c ON p.cliente_id = c.id
       ORDER BY p.created_at DESC
-      LIMIT 2
+      LIMIT 10
     `);
 
     const result = {

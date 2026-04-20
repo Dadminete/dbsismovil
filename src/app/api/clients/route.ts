@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     let estado = (searchParams.get('estado') || 'todos').toLowerCase();
     
     // Whitelist validation
-    if (!['pagado', 'pendiente', 'todos'].includes(estado)) {
+    if (!['pagado', 'pendiente', 'todos', 'adelantado'].includes(estado)) {
       estado = 'todos';
     }
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           SELECT 1
           FROM facturas_clientes f
           WHERE f.cliente_id = c.id
-            AND f.estado IN ('pendiente', 'parcial')
+            AND LOWER(f.estado) IN ('pendiente', 'parcial', 'adelantado')
         )`;
     }
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         c.foto_url,
         EXISTS (
           SELECT 1 FROM facturas_clientes f 
-          WHERE f.cliente_id = c.id AND f.estado IN ('pendiente', 'parcial')
+          WHERE f.cliente_id = c.id AND LOWER(f.estado) IN ('pendiente', 'parcial', 'adelantado')
         ) as has_pending,
         EXISTS (
           SELECT 1 FROM facturas_clientes f

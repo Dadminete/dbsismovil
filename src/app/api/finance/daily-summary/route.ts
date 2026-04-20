@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
     try {
@@ -33,7 +34,7 @@ export async function GET() {
             `)
         ]);
 
-        return NextResponse.json({
+        return new NextResponse(JSON.stringify({
             today: {
                 income: dailyIncome.rows[0].total,
                 expense: dailyExpense.rows[0].total,
@@ -42,6 +43,14 @@ export async function GET() {
             cajas: cajas.rows,
             accounts: accounts.rows,
             recent: recentMovements.rows
+        }), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
         });
     } catch (error) {
         console.error('Error fetching daily summary:', error);
