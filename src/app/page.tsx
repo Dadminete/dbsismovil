@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { query } from '@/lib/db';
 import DashboardView from './DashboardView';
 import { cookies } from 'next/headers';

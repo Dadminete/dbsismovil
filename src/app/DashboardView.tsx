@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { motion, useAnimation } from 'framer-motion';
 import { TrendingUp, Users, AlertCircle, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const LOCALE = 'es-DO';
 
@@ -16,6 +16,7 @@ export default function DashboardView({ stats: initialStats }: { stats: any }) {
   const router = useRouter();
   const [stats, setStats] = useState(initialStats);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Background polling every 30 seconds
@@ -26,6 +27,7 @@ export default function DashboardView({ stats: initialStats }: { stats: any }) {
         const newData = await res.json();
         if (newData && !newData.error) {
           setStats(newData);
+          setLastUpdated(new Date());
         }
       } catch (err) {
         console.error('Quiet polling error:', err);
@@ -47,6 +49,7 @@ export default function DashboardView({ stats: initialStats }: { stats: any }) {
       const newData = await res.json();
       if (newData && !newData.error) {
         setStats(newData);
+        setLastUpdated(new Date());
       }
     } catch (err) {
       console.error('Manual refresh error:', err);
@@ -102,6 +105,12 @@ export default function DashboardView({ stats: initialStats }: { stats: any }) {
         <div className="text-center px-4">
           <h1 className="text-2xl font-black gold-text-gradient uppercase tracking-tighter">DBSISMOVIL</h1>
           <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Empresa Tecnológica del Este</p>
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
+            <p className="text-[8px] text-gray-500 font-black uppercase tracking-tighter italic">
+              En vivo • Actualizado {lastUpdated.toLocaleTimeString(LOCALE, { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </p>
+          </div>
         </div>
       </header>
 
