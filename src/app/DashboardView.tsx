@@ -12,21 +12,52 @@ const formatNumber = (value: number) => value.toLocaleString(LOCALE);
 const formatCurrency = (value: number) => `$${formatNumber(value)}`;
 const formatDate = (value: string | number | Date) => new Date(value).toLocaleDateString(LOCALE);
 
-export default function DashboardView({ stats }: { stats: any }) {
+export default function DashboardView({ stats: initialStats }: { stats: any }) {
   const router = useRouter();
+  const [stats, setStats] = useState(initialStats);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Background polling every 30 seconds
+  useEffect(() => {
+    const fetchLatestStats = async () => {
+      try {
+        const res = await fetch('/api/stats');
+        const newData = await res.json();
+        if (newData && !newData.error) {
+          setStats(newData);
+        }
+      } catch (err) {
+        console.error('Quiet polling error:', err);
+      }
+    };
+
+    const interval = setInterval(fetchLatestStats, 30000); // 30s
+    return () => clearInterval(interval);
+  }, []);
 
   const handleRefresh = async () => {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(50); // Haptic feedback
     }
     setIsRefreshing(true);
-    router.refresh(); // Tells Next.js to re-fetch Server Components
+    
+    try {
+      const res = await fetch('/api/stats');
+      const newData = await res.json();
+      if (newData && !newData.error) {
+        setStats(newData);
+      }
+    } catch (err) {
+      console.error('Manual refresh error:', err);
+      router.refresh(); // Fallback to Next.js refresh if fetch fails
+    }
+    
     // Simulate a minimum visual delay so the user sees the spinner
     await new Promise(res => setTimeout(res, 800));
     setIsRefreshing(false);
   };
+
   const income = stats.monthlyIncome || 0;
   const expenses = stats.monthlyExpenses || 0;
   const total = income + expenses;

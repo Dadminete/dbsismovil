@@ -39,6 +39,10 @@ export async function POST(request: Request) {
             sessionUserId = null;
         }
 
+        if (!sessionUserId) {
+            return NextResponse.json({ error: 'Usted no tiene una sesión activa o válida para realizar cobros.' }, { status: 401 });
+        }
+
         await client.query('BEGIN');
 
         // 1. Validate Invoice and Balance
@@ -107,7 +111,7 @@ export async function POST(request: Request) {
 
         await client.query(
             'UPDATE cuentas_por_cobrar SET monto_pendiente = $1, estado = $2, updated_at = NOW() WHERE factura_id = $3',
-            [newPending, isFullyPaid ? 'pagada' : 'parcial', factura_id]
+            [newPending, isFullyPaid ? 'pagado' : 'parcial', factura_id]
         );
 
         await client.query(
