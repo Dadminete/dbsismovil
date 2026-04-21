@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
+import { createSessionJWT } from '@/lib/auth-helpers';
 
 export async function POST(request: Request) {
     try {
@@ -11,72 +12,45 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Usuario y contraseña requeridos' }, { status: 400 });
         }
 
-        // Query user by username
-        const result = await query(
-            `SELECT 
-                u.id,
-                u.nombre,
-                u.username,
-                u.email,
-                u.password_hash,
-                u.activo,
-                u.token_version,
-                (
-                    SELECT r.nombre_rol
-                    FROM usuarios_roles ur
-                    JOIN roles r ON r.id = ur.rol_id
-                    WHERE ur.usuario_id = u.id
-                        AND ur.activo = true
-                        AND r.activo = true
-                    ORDER BY r.prioridad DESC, ur.fecha_asignacion DESC
-                    LIMIT 1
-                ) as rol,
-                (
-                    EXISTS (
-                        SELECT 1
-                        FROM usuarios_roles ur
-                        JOIN roles r ON r.id = ur.rol_id
-                        WHERE ur.usuario_id = u.id
-                            AND ur.activo = true
-                            AND r.activo = true
-                            AND lower(translate(r.nombre_rol, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
-                    )
-                    OR EXISTS (
-                        SELECT 1
-                        FROM usuarios_permisos up
-                        JOIN permisos p ON p.id = up.permiso_id
-                        WHERE up.usuario_id = u.id
-                            AND up.activo = true
-                            AND p.activo = true
-                            AND lower(translate(p.nombre_permiso, 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙ', 'aeiouAEIOUaeiouAEIOU')) LIKE '%tecnico%'
-                    )
-                ) as is_tecnico
-            FROM usuarios u
-            WHERE u.username = $1`,
-            [username]
-        );
+        // Query user by username using Prisma
+        const user = await prisma.usuario.findUnique({
+            where: { username },
+            include: {
+                usuariosRoles: {
+                    where: { activo: true },
+                    include: { rol: true },
+                    orderBy: [
+                        { rol: { prioridad: 'desc' } },
+                        { fechaAsignacion: 'desc' }
+                    ]
+                },
+                usuariosPermisos: {
+                    where: { activo: true },
+                    include: { permiso: true }
+                }
+            }
+        });
 
-        if (result.rows.length === 0) {
+        if (!user) {
             return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
         }
-
-        const user = result.rows[0];
 
         // Check if user is active
         if (!user.activo) {
             return NextResponse.json({ error: 'Usuario desactivado' }, { status: 401 });
         }
 
-        // Support both hashed and plaintext (fallback) passwords
-        let isPasswordValid = false;
+        // Determine main role name
+        const roleName = user.usuariosRoles[0]?.rol?.nombreRol || null;
 
-        if (user.password_hash.startsWith('$2b$')) {
-            // It's a BCrypt hash
-            isPasswordValid = await bcrypt.compare(password, user.password_hash);
-        } else {
-            // Fallback for legacy plaintext passwords
-            isPasswordValid = user.password_hash === password;
-        }
+        // Check if user is "tecnico" based on role or explicit permission
+        const normalizeAndMatch = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('tecnico');
+        const hasTecnicoRole = user.usuariosRoles.some(ur => ur.rol.activo && normalizeAndMatch(ur.rol.nombreRol));
+        const hasTecnicoPerm = user.usuariosPermisos.some(up => up.permiso.activo && normalizeAndMatch(up.permiso.nombrePermiso));
+        const isTecnico = hasTecnicoRole || hasTecnicoPerm;
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isPasswordValid) {
             return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
@@ -86,16 +60,18 @@ export async function POST(request: Request) {
         const sessionData = {
             userId: user.id,
             nombre: user.nombre,
-            email: user.email,
-            rol: user.rol || null,
-            isTecnico: Boolean(user.is_tecnico),
-            token_version: user.token_version || 1,
+            email: user.email || '',
+            rol: roleName,
+            isTecnico,
             loginAt: new Date().toISOString(),
         };
 
+        // Generate signed JWT
+        const jwtToken = await createSessionJWT(sessionData);
+
         // Set session cookie
         const cookieStore = await cookies();
-        cookieStore.set('session', JSON.stringify(sessionData), {
+        cookieStore.set('session', jwtToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
@@ -105,7 +81,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol || null, isTecnico: Boolean(user.is_tecnico) },
+            user: { id: user.id, nombre: user.nombre, email: user.email, rol: roleName, isTecnico },
         });
     } catch (error) {
         console.error('Login error:', error);

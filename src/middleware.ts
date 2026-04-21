@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isTecnicoRole } from './lib/auth-helpers';
+import { jwtVerify } from 'jose';
 
 // Routes that don't require authentication
 const publicRoutes = ['/login', '/api/auth/login', '/api/auth/biometric'];
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-development-only-change-me';
+const encodedSecret = new TextEncoder().encode(JWT_SECRET);
 
 function isTecnicoSession(sessionData: any) {
     return Boolean(sessionData?.isTecnico) || isTecnicoRole(sessionData?.rol);
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Allow public routes
@@ -41,7 +45,19 @@ export function middleware(request: NextRequest) {
     }
 
     try {
-        const sessionData = JSON.parse(session.value);
+        let sessionData;
+        try {
+            // First try to parse as JWT
+            const { payload } = await jwtVerify(session.value, encodedSecret);
+            sessionData = payload;
+        } catch {
+            // Fallback for active legacy sessions if needed (optional)
+            // or simply redirect to login if verification fails
+            console.warn('JWT verification failed, clearing invalid session.');
+            const response = NextResponse.redirect(new URL('/login', request.url));
+            response.cookies.delete('session');
+            return response;
+        }
 
         if (isTecnicoSession(sessionData)) {
             const isAllowedTecnicoPath =
